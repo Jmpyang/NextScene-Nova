@@ -8,8 +8,10 @@ const upload = require('../middleware/upload');
 // Validation rules
 const scriptValidation = [
   body('title').trim().notEmpty().withMessage('Title is required'),
-  body('description').trim().notEmpty().withMessage('Description is required')
-  // Content validation removed since it can come from file upload
+  body('description').trim().notEmpty().withMessage('Description is required'),
+  body('genre').optional().isIn(['Drama', 'Comedy', 'Sci-Fi', 'Horror', 'Thriller', 'Romance', 'Action', 'Documentary', 'Short Film', 'Other']).withMessage('Invalid genre'),
+  body('pageCount').optional().isInt({ min: 0 }).withMessage('Page count must be a positive number'),
+  body('language').optional().trim().notEmpty().withMessage('Language cannot be empty')
 ];
 
 // List all scripts
@@ -29,5 +31,8 @@ router.post('/:id/delete', isLoggedIn, scriptController.deleteScript);
 
 // Add rating to script
 router.post('/:id/rate', isLoggedIn, scriptController.addRating);
+
+// Download script as PDF
+router.get('/:id/download', isLoggedIn, scriptController.downloadScriptPDF);
 
 module.exports = router;

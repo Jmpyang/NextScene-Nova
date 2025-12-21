@@ -19,6 +19,12 @@ const registerValidation = [
       throw new Error('Passwords do not match');
     }
     return true;
+  }),
+  body('phoneNumber').trim().custom((value, { req }) => {
+    if (req.body.isWriter === 'true' && !value) {
+      throw new Error('Phone number is required for writers');
+    }
+    return true;
   })
 ];
 

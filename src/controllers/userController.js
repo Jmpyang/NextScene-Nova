@@ -30,15 +30,20 @@ exports.postUpdateProfile = async (req, res) => {
   }
 
   try {
-    const { name, bio } = req.body;
+    const { name, bio, website, twitter, linkedin, phoneNumber, portfolioUrl } = req.body;
 
     const user = await User.findById(req.user._id);
     user.name = name;
     user.bio = bio;
+    user.website = website || '';
+    user.twitter = twitter || '';
+    user.linkedin = linkedin || '';
+    user.phoneNumber = phoneNumber || user.phoneNumber;
+    user.portfolioUrl = portfolioUrl || user.portfolioUrl;
 
-    // Handle avatar upload
+    // Handle avatar upload (Cloudinary returns URL in req.file.path)
     if (req.file) {
-      user.avatar = `/uploads/avatars/${req.file.filename}`;
+      user.avatar = req.file.path;
     }
 
     await user.save();
@@ -106,5 +111,56 @@ exports.getPremiumContent = async (req, res) => {
   } catch (error) {
     console.error('Error fetching premium content:', error);
     res.status(500).json({ success: false, message: 'Error fetching premium content' });
+  }
+};
+
+// --- Admin Functions ---
+
+// Get list of unverified writers (Admins only)
+exports.getUnverifiedWriters = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const unverifiedUsers = await User.find({
+      isVerified: false,
+      isWriter: true,
+      role: 'user'
+    }).select('-password').sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      users: unverifiedUsers
+    });
+  } catch (error) {
+    console.error('Error fetching unverified writers:', error);
+    res.status(500).json({ success: false, message: 'Error fetching unverified writers' });
+  }
+};
+
+// Verify a writer (Admins only)
+exports.postVerifyWriter = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.isVerified = true;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `${user.name} has been verified successfully`,
+      user
+    });
+  } catch (error) {
+    console.error('Error verifying writer:', error);
+    res.status(500).json({ success: false, message: 'Error verifying writer' });
   }
 };

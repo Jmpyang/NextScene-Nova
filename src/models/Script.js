@@ -14,6 +14,10 @@ const scriptSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  fileUrl: {
+    type: String,
+    default: ''
+  },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

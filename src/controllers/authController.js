@@ -13,7 +13,7 @@ exports.postRegister = async (req, res) => {
     });
   }
 
-  const { name, email, password } = req.body;
+  const { name, email, password, phoneNumber, isWriter, portfolioUrl } = req.body;
 
   try {
     // Check if user already exists
@@ -31,6 +31,10 @@ exports.postRegister = async (req, res) => {
       name,
       email: email.toLowerCase(),
       password,
+      phoneNumber,
+      portfolioUrl: portfolioUrl || '',
+      isWriter: isWriter === 'true' || isWriter === true,
+      isVerified: isWriter !== 'true' && isWriter !== true, // Readers are verified by default
       provider: 'local'
     });
 
@@ -50,7 +54,9 @@ exports.postRegister = async (req, res) => {
           id: user._id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
+          isWriter: user.isWriter,
+          isVerified: user.isVerified
         }
       });
     });
@@ -98,7 +104,9 @@ exports.postLogin = (req, res, next) => {
           id: user._id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
+          isWriter: user.isWriter,
+          isVerified: user.isVerified
         }
       });
     });

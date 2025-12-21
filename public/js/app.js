@@ -29,7 +29,8 @@ const routes = {
     '/profile': renderProfile,
     '/scripts/create': renderCreateScript,
     '/premium': renderPremium,
-    '/forgot': renderForgot
+    '/forgot': renderForgot,
+    '/admin': renderAdmin
 };
 
 async function init() {
@@ -86,12 +87,20 @@ async function handleLocation() {
     const handler = routes[path] || renderHome;
 
     // Protected Routes
-    const protectedRoutes = ['/profile', '/scripts/create', '/premium'];
-    if (protectedRoutes.includes(path) && !state.isAuthenticated) {
-        Components.toast('Please login to access this page', 'error');
-        window.history.pushState({}, "", '/login');
-        renderLogin();
-        return;
+    const protectedRoutes = ['/profile', '/scripts/create', '/premium', '/admin'];
+    if (protectedRoutes.includes(path)) {
+        if (!state.isAuthenticated) {
+            Components.toast('Please login to access this page', 'error');
+            window.history.pushState({}, "", '/login');
+            renderLogin();
+            return;
+        }
+        if (path === '/admin' && state.user.role !== 'admin') {
+            Components.toast('Unauthorized access', 'error');
+            window.history.pushState({}, "", '/');
+            renderHome();
+            return;
+        }
     }
 
     handler();
@@ -170,21 +179,27 @@ async function renderScripts() {
             </div>
             
             <!-- Search and Filter Controls -->
-            <div class="search-controls" style="margin-bottom: 2rem;">
-                <input type="text" id="search-input" class="form-input" placeholder="🔍 Search scripts by title, description, or author..." style="margin-bottom: 1rem;">
+            <div class="card" style="margin-bottom: 3rem; padding: 1.5rem; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                <div style="position: relative; margin-bottom: 1.5rem;">
+                    <i class="fas fa-search" style="position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                    <input type="text" id="search-input" class="form-input" placeholder="Search scripts by title, description, or author..." style="padding-left: 3.5rem; border-radius: 12px; height: 55px; font-size: 1.05rem;">
+                </div>
                 
-                <div class="genre-filters" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="filter-btn active" data-genre="all">All</button>
-                    <button class="filter-btn" data-genre="Drama">Drama</button>
-                    <button class="filter-btn" data-genre="Comedy">Comedy</button>
-                    <button class="filter-btn" data-genre="Sci-Fi">Sci-Fi</button>
-                    <button class="filter-btn" data-genre="Horror">Horror</button>
-                    <button class="filter-btn" data-genre="Thriller">Thriller</button>
-                    <button class="filter-btn" data-genre="Romance">Romance</button>
-                    <button class="filter-btn" data-genre="Action">Action</button>
-                    <button class="filter-btn" data-genre="Documentary">Documentary</button>
-                    <button class="filter-btn" data-genre="Short Film">Short Film</button>
-                    <button class="filter-btn" data-genre="Other">Other</button>
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Filter by Genre:</span>
+                    <div class="genre-filters" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <button class="filter-btn active" data-genre="all">All Genres</button>
+                        <button class="filter-btn" data-genre="Drama">Drama</button>
+                        <button class="filter-btn" data-genre="Comedy">Comedy</button>
+                        <button class="filter-btn" data-genre="Sci-Fi">Sci-Fi</button>
+                        <button class="filter-btn" data-genre="Horror">Horror</button>
+                        <button class="filter-btn" data-genre="Thriller">Thriller</button>
+                        <button class="filter-btn" data-genre="Romance">Romance</button>
+                        <button class="filter-btn" data-genre="Action">Action</button>
+                        <button class="filter-btn" data-genre="Documentary">Documentary</button>
+                        <button class="filter-btn" data-genre="Short Film">Short Film</button>
+                        <button class="filter-btn" data-genre="Other">Other</button>
+                    </div>
                 </div>
             </div>
             
@@ -299,6 +314,42 @@ async function renderScriptDetail(id) {
                         <div style="background: var(--bg-card); padding: 2rem; border-radius: 16px; margin-bottom: 2rem;">
                             <h3>Description</h3>
                             <p style="color: var(--text-secondary); line-height: 1.6;">${script.description || 'No description provided'}</p>
+                        </div>
+
+                        <!-- Content & Download -->
+                        <div style="background: var(--bg-card); padding: 2rem; border-radius: 16px; margin-bottom: 2rem; position: relative;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                                <h3 style="margin: 0;">Script Preview</h3>
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <button class="btn btn-outline" onclick="toggleFocusMode()" style="padding: 0.5rem 1rem;">
+                                        <i class="fas fa-expand"></i> Focus Mode
+                                    </button>
+                                    ${state.isAuthenticated ? `
+                                        <a href="/api/scripts/${script._id}/download" class="btn btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;" target="_blank">
+                                            <i class="fas fa-download"></i> Download PDF
+                                        </a>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            
+                            ${!state.isAuthenticated ? `
+                                <div class="script-content" style="white-space: pre-wrap; font-family: 'Courier Prime', 'Courier New', Courier, monospace; background: var(--bg-dark); padding: 2.5rem; border-radius: 8px; max-height: 400px; overflow: hidden; color: var(--text-primary); border: 1px solid var(--border); line-height: 1.5; mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);">
+${(script.content || '').substring(0, 1000)}...
+                                </div>
+                                <div style="text-align: center; margin-top: -80px; position: relative; z-index: 10; padding-bottom: 2rem;">
+                                    <div style="background: var(--bg-card); display: inline-block; padding: 2rem; border-radius: 16px; box-shadow: 0 -20px 40px rgba(0,0,0,0.5);">
+                                        <h4 style="margin-bottom: 1rem;">Want to read the full script?</h4>
+                                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Register as a reader to unlock the complete story and download PDFs.</p>
+                                        <button class="btn btn-primary" onclick="route(event, '/register')" style="padding: 0.75rem 2rem; font-size: 1.1rem;">
+                                            Read More &rarr;
+                                        </button>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="script-content" style="white-space: pre-wrap; font-family: 'Courier Prime', 'Courier New', Courier, monospace; background: var(--bg-dark); padding: 2.5rem; border-radius: 8px; max-height: 800px; overflow-y: auto; color: var(--text-primary); border: 1px solid var(--border); line-height: 1.5;">
+${script.content}
+                                </div>
+                            `}
                         </div>
                         
                         <!-- Community Rating Form -->
@@ -520,28 +571,94 @@ function renderRegister() {
     const main = document.getElementById('main-content');
     main.innerHTML = `
         <div class="form-container">
-            <h2 class="text-gradient" style="text-align: center; margin-bottom: 2rem;">Join Nova</h2>
+            <h2 class="text-gradient" style="text-align: center; margin-bottom: 1.5rem;">Join NextScene Nova</h2>
+            
+            <div style="display: flex; background: var(--bg-dark); padding: 0.5rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid var(--border);">
+                <button type="button" id="type-reader" style="flex: 1; padding: 0.75rem; border-radius: 8px; border: none; cursor: pointer; transition: all 0.3s; font-weight: 600; background: var(--primary); color: white;">
+                    <i class="fas fa-book-open"></i> I'm a Reader
+                </button>
+                <button type="button" id="type-writer" style="flex: 1; padding: 0.75rem; border-radius: 8px; border: none; cursor: pointer; transition: all 0.3s; font-weight: 600; background: transparent; color: var(--text-secondary);">
+                    <i class="fas fa-pen-nib"></i> I'm a Writer
+                </button>
+            </div>
+
             <form id="register-form">
+                <input type="hidden" name="isWriter" id="is-writer-input" value="false">
+                
                 <div class="form-group">
-                    <label class="form-label">Name</label>
-                    <input type="text" name="name" class="form-input" required>
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="name" class="form-input" placeholder="Enter your full name" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-input" required>
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-input" placeholder="example@email.com" required>
                 </div>
+                
+                <div id="writer-fields" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Phone Number (Worldwide)</label>
+                        <input type="tel" name="phoneNumber" id="phone-input" class="form-input" placeholder="+1234567890">
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">Required for identity verification.</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Portfolio / Bio Link (Optional)</label>
+                        <input type="url" name="portfolioUrl" class="form-input" placeholder="https://imdb.com/name/...">
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">Links to your work help speed up verification.</p>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-input" required>
+                    <input type="password" name="password" class="form-input" placeholder="Minimum 8 characters" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Confirm Password</label>
-                    <input type="password" name="confirmPassword" class="form-input" required>
+                    <input type="password" name="confirmPassword" class="form-input" placeholder="Re-enter password" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Register</button>
+
+                <div id="writer-note" style="display: none; background: rgba(var(--primary-rgb), 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--primary);">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
+                        <strong><i class="fas fa-info-circle"></i> Writer Verification</strong><br>
+                        Writers are verified by the Super Admin to ensure platform quality. This usually takes 24 hours.
+                    </p>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="register-btn" style="width: 100%;">Create Reader Account</button>
             </form>
         </div>
     `;
+
+    const typeReader = document.getElementById('type-reader');
+    const typeWriter = document.getElementById('type-writer');
+    const writerFields = document.getElementById('writer-fields');
+    const writerNote = document.getElementById('writer-note');
+    const isWriterInput = document.getElementById('is-writer-input');
+    const registerBtn = document.getElementById('register-btn');
+    const phoneInput = document.getElementById('phone-input');
+
+    typeReader.onclick = () => {
+        typeReader.style.background = 'var(--primary)';
+        typeReader.style.color = 'white';
+        typeWriter.style.background = 'transparent';
+        typeWriter.style.color = 'var(--text-secondary)';
+        writerFields.style.display = 'none';
+        writerNote.style.display = 'none';
+        isWriterInput.value = 'false';
+        registerBtn.innerText = 'Create Reader Account';
+        phoneInput.removeAttribute('required');
+    };
+
+    typeWriter.onclick = () => {
+        typeWriter.style.background = 'var(--primary)';
+        typeWriter.style.color = 'white';
+        typeReader.style.background = 'transparent';
+        typeReader.style.color = 'var(--text-secondary)';
+        writerFields.style.display = 'block';
+        writerNote.style.display = 'block';
+        isWriterInput.value = 'true';
+        registerBtn.innerText = 'Register as Writer';
+        phoneInput.setAttribute('required', 'required');
+    };
 
     document.getElementById('register-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -554,7 +671,7 @@ function renderRegister() {
                 state.user = res.user;
                 state.isAuthenticated = true;
                 updateNavbar();
-                Components.toast('Welcome to Nova!');
+                Components.toast(data.isWriter === 'true' ? 'Writer registration submitted! Awaiting verification.' : 'Welcome to Nova!');
                 window.history.pushState({}, "", '/');
                 renderHome();
             } else {
@@ -602,6 +719,30 @@ async function renderProfile() {
                                     <div class="form-group">
                                         <label class="form-label">Bio (Max 500 chars)</label>
                                         <textarea name="bio" class="form-textarea" rows="4">${user.bio || ''}</textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Personal Website</label>
+                                        <input type="url" name="website" class="form-input" value="${user.website || ''}" placeholder="https://yourwebsite.com">
+                                    </div>
+                                    <div style="display: flex; gap: 1rem;">
+                                        <div class="form-group" style="flex: 1;">
+                                            <label class="form-label">Twitter/X Handle</label>
+                                            <input type="text" name="twitter" class="form-input" value="${user.twitter || ''}" placeholder="@username">
+                                        </div>
+                                        <div class="form-group" style="flex: 1;">
+                                            <label class="form-label">LinkedIn Profile</label>
+                                            <input type="text" name="linkedin" class="form-input" value="${user.linkedin || ''}" placeholder="username">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 1rem;">
+                                        <div class="form-group" style="flex: 1;">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" name="phoneNumber" class="form-input" value="${user.phoneNumber || ''}" placeholder="+1234567890">
+                                        </div>
+                                        <div class="form-group" style="flex: 1;">
+                                            <label class="form-label">Portfolio Link</label>
+                                            <input type="url" name="portfolioUrl" class="form-input" value="${user.portfolioUrl || ''}" placeholder="https://...">
+                                        </div>
                                     </div>
                                     <button type="submit" class="btn btn-primary" style="width: 100%;">Update Profile</button>
                                 </form>
@@ -926,11 +1067,15 @@ function renderPremium() {
 }
 
 async function logout() {
+    if (!confirm('Are you sure you want to log out?')) {
+        return;
+    }
+
     await fetch('/api/auth/logout');
     state.user = null;
     state.isAuthenticated = false;
     updateNavbar();
-    Components.toast('Logged out');
+    Components.toast('Logged out successfully');
     window.history.pushState({}, "", '/');
     renderHome();
 }
@@ -1005,6 +1150,90 @@ function toggleFocusMode() {
     }
 }
 
+async function renderAdmin() {
+    const main = document.getElementById('main-content');
+    main.innerHTML = `<div class="container" style="padding-top: 120px;">${Components.loader()}</div>`;
+
+    try {
+        const data = await api.get('/api/user/admin/unverified');
+        if (data.success) {
+            main.innerHTML = `
+                <div class="container" style="padding-top: 120px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h2 class="text-gradient">Admin Dashboard</h2>
+                        <span class="badge" style="background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 20px;">
+                            ${data.users.length} Pending Verifications
+                        </span>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead style="background: var(--bg-dark); color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                <tr>
+                                    <th style="padding: 1.25rem 2rem;">Writer</th>
+                                    <th style="padding: 1.25rem 2rem;">Email</th>
+                                    <th style="padding: 1.25rem 2rem;">Phone</th>
+                                    <th style="padding: 1.25rem 2rem;">Portfolio</th>
+                                    <th style="padding: 1.25rem 2rem;">Joined</th>
+                                    <th style="padding: 1.25rem 2rem; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.users.length > 0 ? data.users.map(u => `
+                                    <tr style="border-bottom: 1px solid var(--border);">
+                                        <td style="padding: 1.25rem 2rem;">
+                                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                                <img src="${u.avatar || 'https://via.placeholder.com/40'}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                                <strong>${u.name}</strong>
+                                            </div>
+                                        </td>
+                                        <td style="padding: 1.25rem 2rem;">${u.email}</td>
+                                        <td style="padding: 1.25rem 2rem;">${u.phoneNumber || 'N/A'}</td>
+                                        <td style="padding: 1.25rem 2rem;">
+                                            ${u.portfolioUrl ? `<a href="${u.portfolioUrl}" target="_blank" class="text-link">View Portfolio <i class="fas fa-external-link-alt"></i></a>` : 'N/A'}
+                                        </td>
+                                        <td style="padding: 1.25rem 2rem;">${new Date(u.createdAt).toLocaleDateString()}</td>
+                                        <td style="padding: 1.25rem 2rem; text-align: right;">
+                                            <button class="btn btn-primary" style="padding: 0.5rem 1rem;" onclick="verifyWriter('${u._id}')">
+                                                Verify Writer
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('') : `
+                                    <tr>
+                                        <td colspan="5" style="padding: 4rem; text-align: center; color: var(--text-secondary);">
+                                            <i class="fas fa-check-circle" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
+                                            All writers are currently verified.
+                                        </td>
+                                    </tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (e) {
+        Components.toast('Error loading admin dashboard', 'error');
+    }
+}
+
+async function verifyWriter(id) {
+    if (!confirm('Are you sure you want to verify this writer?')) return;
+
+    try {
+        const res = await api.post(`/api/user/admin/verify/${id}`);
+        if (res.success) {
+            Components.toast(res.message);
+            renderAdmin();
+        } else {
+            Components.toast(res.message || 'Verification failed', 'error');
+        }
+    } catch (err) {
+        Components.toast('An error occurred', 'error');
+    }
+}
+
 // Global scope
 window.route = route;
 window.logout = logout;
@@ -1012,6 +1241,7 @@ window.toggleTheme = toggleTheme;
 window.deleteScript = deleteScript;
 window.editScript = editScript;
 window.renderScriptEdit = renderScriptEdit;
+window.verifyWriter = verifyWriter;
 window.toggleFocusMode = toggleFocusMode;
 
 // Init

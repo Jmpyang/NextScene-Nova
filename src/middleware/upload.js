@@ -1,24 +1,39 @@
 const multer = require('multer');
-const path = require('path');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary');
 
-// Configure storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'public/uploads/scripts/');
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+// Configure Cloudinary Storage
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req, file) => {
+        const isAvatar = file.fieldname === 'avatar';
+        const folder = isAvatar ? 'nextscene-nova/avatars' : 'nextscene-nova/scripts';
+
+        return {
+            folder: folder,
+            resource_type: 'auto',
+            public_id: file.fieldname + '-' + Date.now()
+        };
     }
 });
 
-// File filter - only allow text and pdf files
+// File filter - allow images for avatars, text/pdf/md for scripts
 const fileFilter = (req, file, cb) => {
-    const allowedMimes = ['text/plain', 'application/pdf', 'text/markdown'];
-    if (allowedMimes.includes(file.mimetype)) {
-        cb(null, true);
+    const isAvatar = file.fieldname === 'avatar';
+
+    if (isAvatar) {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed for avatars.'), false);
+        }
     } else {
-        cb(new Error('Invalid file type. Only .txt, .pdf, and .md files are allowed.'));
+        const allowedMimes = ['text/plain', 'application/pdf', 'text/markdown'];
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only .txt, .pdf, and .md files are allowed.'), false);
+        }
     }
 };
 

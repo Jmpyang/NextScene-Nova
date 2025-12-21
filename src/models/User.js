@@ -53,6 +53,34 @@ const userSchema = new mongoose.Schema({
   bio: {
     type: String,
     default: ''
+  },
+  phoneNumber: {
+    type: String,
+    default: ''
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  isWriter: {
+    type: Boolean,
+    default: false
+  },
+  website: {
+    type: String,
+    default: ''
+  },
+  twitter: {
+    type: String,
+    default: ''
+  },
+  linkedin: {
+    type: String,
+    default: ''
+  },
+  portfolioUrl: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

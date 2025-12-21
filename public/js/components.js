@@ -9,6 +9,7 @@ const Components = {
                 <li><a href="/scripts" class="nav-link" onclick="route(event, '/scripts')">Scripts</a></li>
                 <li><a href="/premium" class="nav-link" onclick="route(event, '/premium')">Premium</a></li>
                 ${user ? `
+                    ${user.role === 'admin' ? `<li><a href="/admin" class="nav-link" onclick="route(event, '/admin')" style="color: var(--primary); font-weight: bold;">Admin</a></li>` : ''}
                     <li><a href="/profile" class="nav-link" onclick="route(event, '/profile')">Profile</a></li>
                     <li><a href="#" class="btn btn-primary" onclick="logout()">Logout</a></li>
                 ` : `

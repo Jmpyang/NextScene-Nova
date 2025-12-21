@@ -18,4 +18,10 @@ router.get('/profile', isLoggedIn, userController.getProfile);
 // Update profile
 router.post('/profile', isLoggedIn, avatarUpload.single('avatar'), profileValidation, userController.postUpdateProfile);
 
+// Admin: Get unverified writers
+router.get('/admin/unverified', isLoggedIn, userController.getUnverifiedWriters);
+
+// Admin: Verify writer
+router.post('/admin/verify/:id', isLoggedIn, userController.postVerifyWriter);
+
 module.exports = router;

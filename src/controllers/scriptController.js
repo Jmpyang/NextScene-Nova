@@ -77,32 +77,56 @@ exports.postCreateScript = async (req, res) => {
     return res.status(400).json({ success: false, errors: errors.array() });
   }
 
+  // Check if user is a verified WRITER (Admins bypass this)
+  const isAuthorizedWriter = (req.user.isWriter && req.user.isVerified) || req.user.role === 'admin';
+
+  if (!isAuthorizedWriter) {
+    const errorMsg = !req.user.isWriter ? 'Readers cannot upload scripts. Please register as a Writer.' : 'Account not verified. You must be verified by an admin to upload scripts.';
+    return res.status(403).json({
+      success: false,
+      message: errorMsg
+    });
+  }
+
   try {
-    const { title, description, content, isPremiumOnly, status } = req.body;
-    const fs = require('fs').promises;
+    const { title, description, content, isPremiumOnly, status, genre, pageCount, language } = req.body;
+    const axios = require('axios');
 
     let scriptContent = content;
+    let fileUrl = '';
 
-    // If a file was uploaded, read its content
+    // If a file was uploaded (to Cloudinary)
     if (req.file) {
-      try {
-        scriptContent = await fs.readFile(req.file.path, 'utf-8');
-      } catch (err) {
-        console.error('Error reading uploaded file:', err);
-        return res.status(400).json({ success: false, message: 'Error reading uploaded file' });
+      fileUrl = req.file.path;
+
+      // If it's a text-based file, fetch its content for the preview
+      const isTextFile = req.file.mimetype === 'text/plain' || req.file.mimetype === 'text/markdown';
+      if (isTextFile) {
+        try {
+          const response = await axios.get(fileUrl);
+          scriptContent = response.data;
+        } catch (err) {
+          console.error('Error fetching file content from Cloudinary:', err);
+          // Fallback to what was provided in the text area or a placeholder
+        }
       }
     }
 
-    // Validate that we have content from either field or file
-    if (!scriptContent || scriptContent.trim() === '') {
+    // Validate that we have content from either field or file (unless it's a PDF which we can't easily read)
+    const isPDF = req.file && req.file.mimetype === 'application/pdf';
+    if (!isPDF && (!scriptContent || scriptContent.trim() === '')) {
       return res.status(400).json({ success: false, message: 'Script content is required (either via text input or file upload)' });
     }
 
     const script = await Script.create({
       title,
       description,
-      content: scriptContent,
+      content: scriptContent || (isPDF ? 'PDF File Uploaded (Reading Not Supported. Please Download)' : ''),
+      fileUrl,
       author: req.user._id,
+      genre: genre || 'Other',
+      pageCount: parseInt(pageCount) || 0,
+      language: language || 'English',
       isPremiumOnly: isPremiumOnly === true || isPremiumOnly === 'on' || isPremiumOnly === 'true',
       status: status || 'published'
     });
@@ -239,5 +263,55 @@ exports.addRating = async (req, res) => {
   } catch (error) {
     console.error('Error adding rating:', error);
     res.status(500).json({ success: false, message: 'Error adding rating' });
+  }
+};
+
+// Download script as PDF
+exports.downloadScriptPDF = async (req, res) => {
+  try {
+    const script = await Script.findById(req.params.id).populate('author', 'name');
+    if (!script) {
+      return res.status(404).json({ success: false, message: 'Script not found' });
+    }
+
+    // Check premium access
+    if (script.isPremiumOnly) {
+      const User = require('../models/User');
+      const user = await User.findById(req.user._id);
+      if (!user.isPremiumActive() && script.author.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Premium subscription required to download this script' });
+      }
+    }
+
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({ margin: 50 });
+
+    // Set filename
+    const filename = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+    res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-type', 'application/pdf');
+
+    doc.pipe(res);
+
+    // Title Page
+    doc.fontSize(25).text(script.title, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(15).text(`By ${script.author ? script.author.name : 'Unknown'}`, { align: 'center' });
+    doc.moveDown(2);
+    doc.fontSize(12).text(script.description || '', { align: 'left', lineGap: 5 });
+
+    doc.addPage();
+
+    // Script Content
+    doc.font('Courier').fontSize(12).text(script.content, {
+      lineGap: 10,
+      paragraphGap: 15
+    });
+
+    doc.end();
+
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    res.status(500).json({ success: false, message: 'Error generating PDF' });
   }
 };
