@@ -1,0 +1,214 @@
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: toastSlide 0.3s ease;
+    z-index: 10000;
+}
+
+@keyframes toastSlide {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast.success {
+    border-left: 4px solid #10b981;
+}
+
+.toast.error {
+    border-left: 4px solid #ef4444;
+}
+
+.toast.info {
+    border-left: 4px solid var(--accent);
+}
+
+/* Genre Tags */
+.genre-tag {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+/* Focus Mode Styles */
+.focus-mode {
+    background: #f5f5dc !important;
+}
+
+[data-theme="dark"] .focus-mode {
+    background: #1a1a1a !important;
+}
+
+.focus-mode .container {
+    max-width: 100%;
+    padding: 2rem;
+}
+
+.focus-mode .script-content {
+    max-height: none !important;
+    background: white !important;
+    color: #000 !important;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .focus-mode .script-content {
+    background: #0f0f0f !important;
+    color: #e0e0e0 !important;
+}
+
+/* Script Content - Courier Prime*/
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
+.script-content {
+    font-family: 'Courier Prime', 'Courier New', monospace !important;
+    font-size: 12pt;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    background: #fafafa;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 8.5in;
+    margin: 0 auto;
+    color: #000;
+}
+
+[data-theme="dark"] .script-content {
+    background: #1a1a1a;
+    color: #e0e0e0;
+}
+
+/* Rating Stars */
+.rating-stars {
+    display: inline-flex;
+    gap: 0.2rem;
+    font-size: 1rem;
+}
+
+.rating-stars i {
+    color: gold;
+}
+
+/* Script Actions */
+.script-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.script-actions .btn {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Danger Button */
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:disabled {
+    background: #6b7280;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Skeleton Loaders */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--bg-card) !important;
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0) 0,
+            rgba(255, 255, 255, 0.05) 20%,
+            rgba(255, 255, 255, 0.1) 60%,
+            rgba(255, 255, 255, 0));
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.skeleton-line {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+/* Carousel Styles */
+.carousel-container {
+    width: 100%;
+    overflow-x: auto;
+    padding: 1rem 0;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.carousel-container::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+.scripts-carousel {
+    display: flex;
+    gap: 2rem;
+    padding: 0 1rem;
+}
+
+.scripts-carousel .card {
+    min-width: 300px;
+    flex: 0 0 300px;
+}
+
+/* Disabled buttons */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}

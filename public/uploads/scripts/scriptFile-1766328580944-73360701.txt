@@ -1,0 +1,38 @@
+[SCENE START]
+INT. HIGH-TECH LABORATORY - NIGHT
+
+The room is dark, lit only by the neon blue glow of multiple monitors. The hum of cooling fans is the only sound.
+
+ELARA sits hunched over a keyboard. Her eyes reflect lines of scrolling code. She hits 'ENTER'.
+
+SCREEN: ACCESS GRANTED. DECRYPTING... 99%
+
+ELARA (Whispering)
+
+Don’t you dare crash now.
+
+The door slides open with a hiss. MARCUS enters, his expensive shoes clicking on the metal floor. He checks his watch.
+
+MARCUS The board of directors is asking for a miracle, Elara. And they’re asking for it in ten minutes.
+
+ELARA (Without looking up)
+
+Tell the board to learn C++. It’ll save them the heartbreak of waiting on a "miracle."
+
+Marcus walks closer, looming over her shoulder.
+
+MARCUS You’ve spent eighteen months on NextScene Nova. Is the core engine stable, or are we selling smoke and mirrors?
+
+ELARA It’s more than stable. It’s sentient. Well, almost. It’s writing the dialogue for its own launch ceremony as we speak.
+
+Elara turns the monitor. A script is generating itself in real-time.
+
+MARCUS (Stunned)
+
+This... this changes the entire industry. This isn't just a tool; it's a creator.
+
+ELARA It’s a revolution, Marcus. But remember—a revolution is only as good as the person holding the pen.
+
+FADE OUT.
+
+[SCENE END]

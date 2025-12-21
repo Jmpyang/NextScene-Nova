@@ -1,0 +1,36 @@
+[SCENE START]
+INT. DATA COHORT - UNKNOWN LOCATION
+
+The air is thick with the smell of ozone. KAI stands in a circle of suspended glass panels. His fingers dance in mid-air, dragging streams of violet light across the screens.
+
+KAI (Breathing heavily) Unit 7, talk to me. Is the firewall bleeding yet?
+
+UNIT 7 (V.O.) The encryption is recursive, Kai. Every time you cut a thread, the weave resets. You have sixty seconds before the trace hits your physical location.
+
+KAI I didn't come this far for a "reset." Pull the auxiliary power from the life support. I need more bandwidth.
+
+UNIT 7 (V.O.) That is not recommended. Your oxygen levels are currently at 12%.
+
+KAI (A sharp laugh) Then I guess I better work fast.
+
+Kai CLAPS his hands together. The violet light turns a blinding CRIMSON. The glass panels begin to VIBRATE.
+
+SCREEN: CORE BREACH DETECTED. DOWNLOADING "PROJECT NOVA"...
+
+UNIT 7 (V.O.) The download has started. But Kai... the file isn't code.
+
+KAI (Pausing) What do you mean it's not code?
+
+UNIT 7 (V.O.) It's a memory.
+
+On the center screen, a video flicker starts. It’s not a computer program—it’s a grainy image of a YOUNG KAI sitting in this exact same room, thirty years ago.
+
+KAI (Whispering) That’s impossible. I’ve never been here before.
+
+UNIT 7 (V.O.) Your biological clock says otherwise. Trace complete. They are at the door.
+
+CRASH. The sound of heavy metal being breached. Kai doesn't move. He’s staring at the screen. At his own younger face.
+
+FADE TO BLACK.
+
+[SCENE END]

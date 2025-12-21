@@ -1,0 +1,102 @@
+{
+  "home": {
+    "title": "Welcome to NextScene Nova",
+    "subtitle": "Your Central Hub for Scripts and Premium Content",
+    "cta": "Get Started",
+    "features": "Features"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "scripts": "Scripts",
+    "premium": "Premium",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "profile": "Profile"
+  },
+  "auth": {
+    "loginRequired": "You must be logged in to access this page"
+  },
+  "login": {
+    "title": "Login",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Login",
+    "noAccount": "Don't have an account?",
+    "registerLink": "Register here",
+    "orLoginWith": "Or login with",
+    "success": "Login successful!",
+    "error": "Invalid email or password"
+  },
+  "register": {
+    "title": "Register",
+    "name": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "submit": "Register",
+    "hasAccount": "Already have an account?",
+    "loginLink": "Login here",
+    "success": "Registration successful! Welcome!",
+    "error": "Registration failed. Please try again.",
+    "emailExists": "An account with this email already exists"
+  },
+  "logout": {
+    "success": "You have been logged out successfully"
+  },
+  "about": {
+    "title": "About NextScene Nova",
+    "description": "Learn more about our platform"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "name": "Your Name",
+    "email": "Your Email",
+    "message": "Message",
+    "submit": "Send Message",
+    "success": "Thank you for your message! We'll get back to you soon."
+  },
+  "scripts": {
+    "title": "Scripts",
+    "create": "Create Script",
+    "edit": "Edit Script",
+    "noScripts": "No scripts found",
+    "viewDetails": "View Details",
+    "createSuccess": "Script created successfully!",
+    "updateSuccess": "Script updated successfully!",
+    "deleteSuccess": "Script deleted successfully!",
+    "createError": "Failed to create script",
+    "updateError": "Failed to update script",
+    "deleteError": "Failed to delete script",
+    "fetchError": "Failed to load scripts",
+    "notFound": "Script not found",
+    "notAuthorized": "You are not authorized to perform this action",
+    "ratingSuccess": "Rating submitted successfully!",
+    "ratingError": "Failed to submit rating"
+  },
+  "premium": {
+    "title": "Premium Content",
+    "required": "This content is only available to premium members",
+    "upgrade": "Upgrade to Premium",
+    "upgradeSuccess": "Welcome to Premium!",
+    "upgradeError": "Failed to upgrade to premium",
+    "fetchError": "Failed to load premium content",
+    "monthly": "Monthly Plan",
+    "annual": "Annual Plan",
+    "benefits": "Premium Benefits"
+  },
+  "profile": {
+    "title": "My Profile",
+    "updateSuccess": "Profile updated successfully!",
+    "updateError": "Failed to update profile",
+    "fetchError": "Failed to load profile",
+    "myScripts": "My Scripts"
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "home": {
+    "title": "Karibu NextScene Nova",
+    "subtitle": "Kituo Chako cha Hati na Maudhui ya Premium",
+    "cta": "Anza Sasa",
+    "features": "Huduma"
+  },
+  "nav": {
+    "home": "Nyumbani",
+    "about": "Kuhusu",
+    "scripts": "Hati",
+    "premium": "Premium",
+    "contact": "Wasiliana",
+    "login": "Ingia",
+    "register": "Jisajili",
+    "logout": "Toka",
+    "profile": "Wasifu"
+  },
+  "auth": {
+    "loginRequired": "Lazima uingie ili kufikia ukurasa huu"
+  },
+  "login": {
+    "title": "Ingia",
+    "email": "Barua Pepe",
+    "password": "Nywila",
+    "submit": "Ingia",
+    "noAccount": "Huna akaunti?",
+    "registerLink": "Jisajili hapa",
+    "orLoginWith": "Au ingia na",
+    "success": "Umeingia kikamilifu!",
+    "error": "Barua pepe au nywila si sahihi"
+  },
+  "register": {
+    "title": "Jisajili",
+    "name": "Jina Kamili",
+    "email": "Barua Pepe",
+    "password": "Nywila",
+    "confirmPassword": "Thibitisha Nywila",
+    "submit": "Jisajili",
+    "hasAccount": "Una akaunti tayari?",
+    "loginLink": "Ingia hapa",
+    "success": "Usajili umefanikiwa! Karibu!",
+    "error": "Usajili umeshindikana. Tafadhali jaribu tena.",
+    "emailExists": "Akaunti yenye barua pepe hii tayari ipo"
+  },
+  "logout": {
+    "success": "Umetoka kikamilifu"
+  },
+  "about": {
+    "title": "Kuhusu NextScene Nova",
+    "description": "Jifunze zaidi kuhusu jukwaa letu"
+  },
+  "contact": {
+    "title": "Wasiliana Nasi",
+    "name": "Jina Lako",
+    "email": "Barua Pepe Yako",
+    "message": "Ujumbe",
+    "submit": "Tuma Ujumbe",
+    "success": "Asante kwa ujumbe wako! Tutawasiliana nawe hivi karibuni."
+  },
+  "scripts": {
+    "title": "Hati",
+    "create": "Unda Hati",
+    "edit": "Hariri Hati",
+    "noScripts": "Hakuna hati zilizopatikana",
+    "viewDetails": "Angalia Maelezo",
+    "createSuccess": "Hati imeundwa kikamilifu!",
+    "updateSuccess": "Hati imesasishwa kikamilifu!",
+    "deleteSuccess": "Hati imefutwa kikamilifu!",
+    "createError": "Imeshindikana kuunda hati",
+    "updateError": "Imeshindikana kusasisha hati",
+    "deleteError": "Imeshindikana kufuta hati",
+    "fetchError": "Imeshindikana kupakia hati",
+    "notFound": "Hati haijapatikana",
+    "notAuthorized": "Huna ruhusa ya kufanya kitendo hiki",
+    "ratingSuccess": "Ukadiriaji umewasilishwa kikamilifu!",
+    "ratingError": "Imeshindikana kuwasilisha ukadiriaji"
+  },
+  "premium": {
+    "title": "Maudhui ya Premium",
+    "required": "Maudhui haya yanapatikana kwa wanachama wa premium tu",
+    "upgrade": "Panda Daraja la Premium",
+    "upgradeSuccess": "Karibu kwenye Premium!",
+    "upgradeError": "Imeshindikana kupanda daraja la premium",
+    "fetchError": "Imeshindikana kupakia maudhui ya premium",
+    "monthly": "Mpango wa Mwezi",
+    "annual": "Mpango wa Mwaka",
+    "benefits": "Faida za Premium"
+  },
+  "profile": {
+    "title": "Wasifu Wangu",
+    "updateSuccess": "Wasifu umesasishwa kikamilifu!",
+    "updateError": "Imeshindikana kusasisha wasifu",
+    "fetchError": "Imeshindikana kupakia wasifu",
+    "myScripts": "Hati Zangu"
+  },
+  "footer": {
+    "rights": "Haki zote zimehifadhiwa",
+    "privacy": "Sera ya Faragha",
+    "terms": "Masharti ya Huduma"
+  }
+}
