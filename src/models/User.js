@@ -81,6 +81,15 @@ const userSchema = new mongoose.Schema({
   portfolioUrl: {
     type: String,
     default: ''
+  },
+  // Saved scripts / favorites
+  favorites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Script'
+  }],
+  // Has the user accepted the latest Terms & Conditions
+  acceptedTermsAt: {
+    type: Date
   }
 }, {
   timestamps: true

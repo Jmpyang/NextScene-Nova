@@ -30,7 +30,8 @@ const routes = {
     '/scripts/create': renderCreateScript,
     '/premium': renderPremium,
     '/forgot': renderForgot,
-    '/admin': renderAdmin
+    '/admin': renderAdmin,
+    '/terms': renderTerms
 };
 
 async function init() {
@@ -154,19 +155,23 @@ async function renderHome() {
         document.getElementById('trending-carousel').innerHTML = '<p>Error loading trending scripts</p>';
     }
 
-    // Fetch Posts (Mocking for now as we didn't implement Post API fully yet)
-    // In real app: const data = await api.get('/api/posts');
+    // Fetch Posts
     const postsGrid = document.getElementById('posts-grid');
-    postsGrid.innerHTML = `
-        <div class="card">
-            <h3 class="card-title">Welcome to Nova</h3>
-            <p class="card-desc">We are live! Explore the new features.</p>
-        </div>
-        <div class="card">
-            <h3 class="card-title">Premium Vault Open</h3>
-            <p class="card-desc">Access exclusive scripts now.</p>
-        </div>
-    `;
+    try {
+        const postsData = await api.get('/api/posts');
+        if (postsData.success && postsData.posts && postsData.posts.length) {
+            postsGrid.innerHTML = postsData.posts.map(p => Components.postCard(p)).join('');
+        } else {
+            postsGrid.innerHTML = `
+                <div class="card">
+                    <h3 class="card-title">Welcome to Nova</h3>
+                    <p class="card-desc">We are live! Explore the new features.</p>
+                </div>
+            `;
+        }
+    } catch (e) {
+        postsGrid.innerHTML = '<p style="color: var(--text-secondary);">Unable to load latest updates right now.</p>';
+    }
 }
 
 async function renderScripts() {
@@ -281,6 +286,7 @@ async function renderScriptDetail(id) {
         if (data.success) {
             const script = data.script;
             const isAuthor = state.user && script.author && script.author._id === state.user._id;
+            const hasLiked = state.user && script.likes && script.likes.some(u => u === state.user._id || (u._id && u._id === state.user._id));
             const editsRemaining = 3 - (script.editCount || 0);
 
             main.innerHTML = `
@@ -321,6 +327,16 @@ async function renderScriptDetail(id) {
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                                 <h3 style="margin: 0;">Script Preview</h3>
                                 <div style="display: flex; gap: 0.75rem;">
+                                    ${state.isAuthenticated ? `
+                                        <button class="btn btn-outline" id="like-btn" style="padding: 0.5rem 1rem;">
+                                            <i class="fas fa-heart" style="color: ${hasLiked ? 'var(--secondary)' : 'var(--text-secondary)'};"></i>
+                                            <span id="likes-count">${script.likesCount || 0}</span>
+                                        </button>
+                                    ` : `
+                                        <button class="btn btn-outline" onclick="route(event, '/login')" style="padding: 0.5rem 1rem;">
+                                            <i class="fas fa-heart"></i> Login to react
+                                        </button>
+                                    `}
                                     <button class="btn btn-outline" onclick="toggleFocusMode()" style="padding: 0.5rem 1rem;">
                                         <i class="fas fa-expand"></i> Focus Mode
                                     </button>
@@ -328,6 +344,11 @@ async function renderScriptDetail(id) {
                                         <a href="/api/scripts/${script._id}/download" class="btn btn-primary" style="padding: 0.5rem 1rem; text-decoration: none;" target="_blank">
                                             <i class="fas fa-download"></i> Download PDF
                                         </a>
+                                        ${script.downloadUrl ? `
+                                            <a href="${script.downloadUrl}" class="btn btn-outline" style="padding: 0.5rem 1rem; text-decoration: none;" target="_blank" rel="noopener">
+                                                <i class="fas fa-film"></i> Download Movie
+                                            </a>
+                                        ` : ''}
                                     ` : ''}
                                 </div>
                             </div>
@@ -384,6 +405,39 @@ ${script.content}
                             </button>
                         </div>
                         ` : ''}
+
+                        <!-- Comments Section -->
+                        <div style="background: var(--bg-card); padding: 2rem; border-radius: 16px; margin-top: 2rem;">
+                            <h3>Discussion</h3>
+                            ${state.isAuthenticated ? `
+                                <form id="comment-form" style="margin-top: 1rem;">
+                                    <textarea name="text" class="form-textarea" rows="3" placeholder="Share your thoughts..." required></textarea>
+                                    <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Post Comment</button>
+                                </form>
+                            ` : `
+                                <p style="color: var(--text-secondary); margin-top: 1rem;">
+                                    <a href="/login" onclick="route(event, '/login')" style="color: var(--primary);">Login</a> to join the discussion.
+                                </p>
+                            `}
+                            <div id="comments-list" style="margin-top: 2rem;">
+                                ${(script.comments || []).slice().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map(c => `
+                                    <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                                        <div>
+                                            <div style="width:36px; height:36px; border-radius:50%; background:var(--bg-dark); display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
+                                                ${(c.user && c.user.name ? c.user.name.charAt(0) : 'U').toUpperCase()}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong>${c.user ? c.user.name : 'User'}</strong>
+                                            <span style="color:var(--text-secondary); font-size:0.8rem; margin-left:0.5rem;">
+                                                ${new Date(c.createdAt).toLocaleString()}
+                                            </span>
+                                            <p style="margin-top:0.25rem;">${c.text}</p>
+                                        </div>
+                                    </div>
+                                `).join('') || '<p style="color: var(--text-secondary);">No comments yet. Be the first to share feedback.</p>'}
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -424,6 +478,53 @@ ${script.content}
                         renderScriptDetail(script._id); // Refresh
                     } else {
                         Components.toast(res.message || 'Error submitting rating', 'error');
+                    }
+                });
+            }
+
+            // Like button interaction
+            const likeBtn = document.getElementById('like-btn');
+            if (likeBtn && state.isAuthenticated) {
+                likeBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    try {
+                        const res = await api.post(`/api/scripts/${script._id}/like`);
+                        if (res.success) {
+                            const icon = likeBtn.querySelector('i');
+                            const countEl = document.getElementById('likes-count');
+                            if (icon) {
+                                icon.style.color = res.liked ? 'var(--secondary)' : 'var(--text-secondary)';
+                            }
+                            if (countEl) {
+                                countEl.textContent = res.likesCount;
+                            }
+                        }
+                    } catch (err) {
+                        Components.toast('Error updating reaction', 'error');
+                    }
+                });
+            }
+
+            // Comment form interaction
+            const commentForm = document.getElementById('comment-form');
+            if (commentForm && state.isAuthenticated) {
+                commentForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(commentForm);
+                    const data = Object.fromEntries(formData);
+                    if (!data.text || !data.text.trim()) {
+                        return Components.toast('Comment cannot be empty', 'error');
+                    }
+                    try {
+                        const res = await api.post(`/api/scripts/${script._id}/comments`, data);
+                        if (res.success) {
+                            Components.toast('Comment posted!');
+                            renderScriptDetail(script._id);
+                        } else {
+                            Components.toast(res.message || 'Error posting comment', 'error');
+                        }
+                    } catch (err) {
+                        Components.toast('Error posting comment', 'error');
                     }
                 });
             }
@@ -623,6 +724,13 @@ function renderRegister() {
                     </p>
                 </div>
 
+                <div class="form-group">
+                    <label style="color: var(--text-secondary); font-size: 0.85rem;">
+                        <input type="checkbox" name="acceptTerms" id="accept-terms" required>
+                        I agree to the <a href="/terms" onclick="route(event, '/terms')" style="color: var(--primary);">Terms &amp; Conditions</a>.
+                    </label>
+                </div>
+
                 <button type="submit" class="btn btn-primary" id="register-btn" style="width: 100%;">Create Reader Account</button>
             </form>
         </div>
@@ -766,6 +874,23 @@ async function renderProfile() {
                                     `).join('')
                     : '<p>You haven\'t uploaded any scripts yet.</p>'
                 }
+                            </div>
+
+                            <h2 style="margin: 3rem 0 1rem;">My Favorites</h2>
+                            <div class="grid" style="grid-template-columns: 1fr;">
+                                ${data.profile.favorites && data.profile.favorites.length
+                    ? data.profile.favorites.map(s => `
+                                        <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem;">
+                                            <div>
+                                                <h4 style="margin-bottom: 0.5rem;">${s.title}</h4>
+                                                <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                                                    ${new Date(s.createdAt).toLocaleDateString()} &bull; ${s.genre || 'Other'}
+                                                </span>
+                                            </div>
+                                            <a href="/scripts/${s._id}" class="btn btn-outline" style="padding: 0.5rem 1rem;" onclick="route(event, '/scripts/${s._id}')">View</a>
+                                        </div>
+                                    `).join('')
+                    : '<p>You have not favorited any scripts yet.</p>'}
                             </div>
                         </div>
                     </div>
@@ -1048,22 +1173,69 @@ function renderPremium() {
              <h1 class="text-gradient" style="font-size: 3rem; margin-bottom: 2rem;">Nova Premium</h1>
              <p style="font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 3rem;">Unlock exclusive scripts and advanced features.</p>
              
-             <div class="grid">
+             <div id="premium-content"></div>
+        </div>
+    `;
+
+    if (!state.user || !state.user.isPremium) {
+        document.getElementById('premium-content').innerHTML = `
+            <div class="grid">
                 <div class="card">
                     <h2>Monthly</h2>
                     <h1 class="text-gradient">$9.99</h1>
                     <p>per month</p>
-                     <button class="btn btn-primary" style="margin-top: 2rem; width: 100%;">Subscribe</button>
+                    <button class="btn btn-primary" style="margin-top: 2rem; width: 100%;" id="subscribe-monthly">Subscribe</button>
                 </div>
-                 <div class="card" style="border-color: var(--primary);">
+                <div class="card" style="border-color: var(--primary);">
                     <h2>Annual</h2>
                     <h1 class="text-gradient">$99.99</h1>
                     <p>per year</p>
-                    <button class="btn btn-primary" style="margin-top: 2rem; width: 100%;">Subscribe</button>
+                    <button class="btn btn-primary" style="margin-top: 2rem; width: 100%;" id="subscribe-annual">Subscribe</button>
                 </div>
-             </div>
-        </div>
-    `;
+            </div>
+        `;
+
+        const handleUpgrade = async (plan) => {
+            try {
+                const res = await api.post('/api/premium/upgrade', { plan });
+                if (res.success) {
+                    Components.toast('You are now a premium member!');
+                    state.user = res.user;
+                    state.isAuthenticated = true;
+                    updateNavbar();
+                    renderPremium();
+                } else {
+                    Components.toast(res.message || 'Upgrade failed', 'error');
+                }
+            } catch (err) {
+                Components.toast('Error upgrading to premium', 'error');
+            }
+        };
+
+        document.getElementById('subscribe-monthly').addEventListener('click', () => handleUpgrade('monthly'));
+        document.getElementById('subscribe-annual').addEventListener('click', () => handleUpgrade('annual'));
+    } else {
+        // Load premium scripts for current premium user
+        (async function() {
+            try {
+                const data = await api.get('/api/premium');
+                if (data.success && data.scripts && data.scripts.length) {
+                    document.getElementById('premium-content').innerHTML = `
+                        <section class="container" style="margin-top: 2rem;">
+                            <h2 style="margin-bottom: 1.5rem;">Premium Scripts</h2>
+                        <div class="grid">
+                            ${data.scripts.map(script => Components.scriptCard(script)).join('')}
+                        </div>
+                    </section>
+                `;
+                } else {
+                    document.getElementById('premium-content').innerHTML = '<p>No premium scripts available yet.</p>';
+                }
+            } catch (e) {
+                document.getElementById('premium-content').innerHTML = '<p>Error loading premium content.</p>';
+            }
+        })();
+    }
 }
 
 async function logout() {
@@ -1078,6 +1250,28 @@ async function logout() {
     Components.toast('Logged out successfully');
     window.history.pushState({}, "", '/');
     renderHome();
+}
+
+// Terms & Conditions static SPA page
+function renderTerms() {
+    const main = document.getElementById('main-content');
+    main.innerHTML = `
+        <div class="container" style="padding-top: 120px; max-width: 800px;">
+            <h1 class="text-gradient" style="margin-bottom: 1.5rem;">Terms &amp; Conditions</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                These Terms &amp; Conditions outline the rules and guidelines for using the NextScene Nova platform.
+                Replace this placeholder text with your finalized legal terms.
+            </p>
+            <ul style="color: var(--text-secondary); margin-left: 1.2rem; margin-bottom: 1rem;">
+                <li>Users are responsible for the content they upload and must own the necessary rights.</li>
+                <li>Premium subscriptions grant time-limited access to exclusive scripts and features.</li>
+                <li>Abusive, hateful, or illegal content is strictly prohibited.</li>
+            </ul>
+            <p style="color: var(--text-secondary);">
+                For full legal wording, please consult with a legal professional and update this page accordingly.
+            </p>
+        </div>
+    `;
 }
 
 // Theme Management

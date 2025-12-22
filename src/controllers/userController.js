@@ -5,7 +5,8 @@ const { validationResult } = require('express-validator');
 // Show user profile
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id)
+      .populate('favorites', 'title genre createdAt isPremiumOnly');
     const scripts = await Script.find({ author: req.user._id })
       .sort({ createdAt: -1 })
       .limit(10);
@@ -90,6 +91,44 @@ exports.postPremiumUpgrade = async (req, res) => {
   } catch (error) {
     console.error('Error upgrading to premium:', error);
     res.status(500).json({ success: false, message: 'Error upgrading to premium' });
+  }
+};
+
+// --- Favorites / Saved scripts ---
+
+// Add or remove a script from user's favorites
+exports.toggleFavorite = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const scriptId = req.params.id;
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const index = user.favorites.findIndex(id => id.toString() === scriptId);
+    let favorited;
+
+    if (index === -1) {
+      user.favorites.push(scriptId);
+      favorited = true;
+      message = 'Added to favorites';
+    } else {
+      user.favorites.splice(index, 1);
+      favorited = false;
+      message = 'Removed from favorites';
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      favorited,
+      message
+    });
+  } catch (error) {
+    console.error('Error toggling favorite:', error);
+    res.status(500).json({ success: false, message: 'Error updating favorites' });
   }
 };
 

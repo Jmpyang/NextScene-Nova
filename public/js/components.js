@@ -49,6 +49,9 @@ const Components = {
     footer: () => `
         <div class="container" style="padding: 4rem 20px; text-align: center; color: var(--text-secondary);">
             <p>&copy; ${new Date().getFullYear()} NextScene Nova. All rights reserved.</p>
+            <p style="margin-top: 0.5rem;">
+                <a href="/terms" onclick="route(event, '/terms')" class="text-link">Terms &amp; Conditions</a>
+            </p>
         </div>
     `,
 
@@ -70,8 +73,12 @@ const Components = {
                 </div>
                 <span style="color: var(--text-secondary); font-size: 0.9rem;">(${script.totalRatings || 0} ratings)</span>
             </div>
-            <div class="card-meta" style="margin-top: 0.5rem;">
+            <div class="card-meta" style="margin-top: 0.5rem; justify-content: space-between;">
                 <span><i class="fas fa-user"></i> ${script.author ? script.author.name : 'Unknown'}</span>
+                <span>
+                    <i class="fas fa-heart" style="color: ${script.isLiked ? 'var(--secondary)' : 'var(--text-secondary)'};"></i>
+                    ${script.likesCount || 0}
+                </span>
             </div>
             <a href="/scripts/${script._id}" class="btn ${script.isPremiumOnly ? 'btn-primary' : 'btn-outline'}" style="width: 100%; margin-top: 1rem; text-align: center;" onclick="route(event, '/scripts/${script._id}')">
                 ${script.isPremiumOnly ? '<i class="fas fa-lock"></i> Unlock' : '<i class="fas fa-book-open"></i> Read Now'}

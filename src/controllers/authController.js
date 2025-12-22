@@ -35,7 +35,8 @@ exports.postRegister = async (req, res) => {
       portfolioUrl: portfolioUrl || '',
       isWriter: isWriter === 'true' || isWriter === true,
       isVerified: isWriter !== 'true' && isWriter !== true, // Readers are verified by default
-      provider: 'local'
+      provider: 'local',
+      acceptedTermsAt: new Date()
     });
 
     // Log the user in

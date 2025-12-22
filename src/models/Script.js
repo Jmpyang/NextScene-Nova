@@ -86,6 +86,38 @@ const scriptSchema = new mongoose.Schema({
     type: String,
     enum: ['draft', 'published', 'archived'],
     default: 'draft'
+  },
+  // Reactions / likes
+  likes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  likesCount: {
+    type: Number,
+    default: 0
+  },
+  // Comment thread (separate from ratings/reviews)
+  comments: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    text: {
+      type: String,
+      trim: true,
+      required: true,
+      maxlength: 2000
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  // Optional media / movie download link (e.g. trailer or final cut)
+  downloadUrl: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

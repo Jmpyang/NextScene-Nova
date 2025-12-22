@@ -25,6 +25,12 @@ const registerValidation = [
       throw new Error('Phone number is required for writers');
     }
     return true;
+  }),
+  body('acceptTerms').custom((value) => {
+    if (value !== 'true' && value !== true) {
+      throw new Error('You must accept the Terms & Conditions to create an account');
+    }
+    return true;
   })
 ];
 

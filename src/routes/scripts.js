@@ -32,6 +32,13 @@ router.post('/:id/delete', isLoggedIn, scriptController.deleteScript);
 // Add rating to script
 router.post('/:id/rate', isLoggedIn, scriptController.addRating);
 
+// Like / Unlike script
+router.post('/:id/like', isLoggedIn, scriptController.toggleLike);
+
+// Comments
+router.get('/:id/comments', scriptController.getComments);
+router.post('/:id/comments', isLoggedIn, scriptController.addComment);
+
 // Download script as PDF
 router.get('/:id/download', isLoggedIn, scriptController.downloadScriptPDF);
 

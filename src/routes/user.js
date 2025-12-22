@@ -24,4 +24,7 @@ router.get('/admin/unverified', isLoggedIn, userController.getUnverifiedWriters)
 // Admin: Verify writer
 router.post('/admin/verify/:id', isLoggedIn, userController.postVerifyWriter);
 
+// Favorites
+router.post('/favorites/:id', isLoggedIn, userController.toggleFavorite);
+
 module.exports = router;

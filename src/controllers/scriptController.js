@@ -44,7 +44,8 @@ exports.getScript = async (req, res) => {
   try {
     const script = await Script.findById(req.params.id)
       .populate('author', 'name avatar bio')
-      .populate('ratings.user', 'name avatar');
+      .populate('ratings.user', 'name avatar')
+      .populate('comments.user', 'name avatar');
 
     if (!script || script.status !== 'published') {
       return res.status(404).json({ success: false, message: 'Script not found' });
@@ -263,6 +264,118 @@ exports.addRating = async (req, res) => {
   } catch (error) {
     console.error('Error adding rating:', error);
     res.status(500).json({ success: false, message: 'Error adding rating' });
+  }
+};
+
+// Toggle like / reaction on script
+exports.toggleLike = async (req, res) => {
+  try {
+    const script = await Script.findById(req.params.id);
+
+    if (!script) {
+      return res.status(404).json({ success: false, message: 'Script not found' });
+    }
+
+    const userId = req.user._id.toString();
+    const index = script.likes.findIndex(id => id.toString() === userId);
+
+    let liked;
+    if (index === -1) {
+      script.likes.push(req.user._id);
+      script.likesCount = (script.likesCount || 0) + 1;
+      liked = true;
+    } else {
+      script.likes.splice(index, 1);
+      script.likesCount = Math.max(0, (script.likesCount || 0) - 1);
+      liked = false;
+    }
+
+    await script.save();
+
+    res.json({
+      success: true,
+      liked,
+      likesCount: script.likesCount
+    });
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    res.status(500).json({ success: false, message: 'Error toggling like' });
+  }
+};
+
+// Add a comment to a script
+exports.addComment = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ success: false, message: 'Comment text is required' });
+    }
+
+    const script = await Script.findById(req.params.id);
+
+    if (!script) {
+      return res.status(404).json({ success: false, message: 'Script not found' });
+    }
+
+    script.comments.push({
+      user: req.user._id,
+      text: text.trim()
+    });
+
+    await script.save();
+
+    // Re-fetch last comment with populated user for UI
+    const populated = await Script.findById(req.params.id)
+      .select('comments')
+      .populate('comments.user', 'name avatar');
+
+    const lastComment = populated.comments[populated.comments.length - 1];
+
+    res.json({
+      success: true,
+      message: 'Comment added successfully',
+      comment: lastComment
+    });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ success: false, message: 'Error adding comment' });
+  }
+};
+
+// List comments for a script (paginated)
+exports.getComments = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    const script = await Script.findById(req.params.id)
+      .select('comments')
+      .populate('comments.user', 'name avatar');
+
+    if (!script) {
+      return res.status(404).json({ success: false, message: 'Script not found' });
+    }
+
+    const totalComments = script.comments.length;
+    const comments = script.comments
+      .slice()
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(skip, skip + limit);
+
+    res.json({
+      success: true,
+      comments,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalComments / limit),
+        totalComments
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({ success: false, message: 'Error fetching comments' });
   }
 };
 
