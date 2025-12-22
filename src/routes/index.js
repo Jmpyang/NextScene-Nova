@@ -35,4 +35,16 @@ router.post('/contact', (req, res) => {
   });
 });
 
+// Tawk.to configuration endpoint
+router.get('/config/tawk', (req, res) => {
+  const propertyId = process.env.TAWK_PROPERTY_ID;
+  const widgetId = process.env.TAWK_WIDGET_ID;
+  
+  res.json({
+    enabled: !!(propertyId && widgetId && propertyId !== 'PROPERTY_ID' && widgetId !== 'WIDGET_ID'),
+    propertyId: propertyId || null,
+    widgetId: widgetId || null
+  });
+});
+
 module.exports = router;

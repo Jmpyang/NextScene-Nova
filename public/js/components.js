@@ -47,11 +47,65 @@ const Components = {
     },
 
     footer: () => `
-        <div class="container" style="padding: 4rem 20px; text-align: center; color: var(--text-secondary);">
-            <p>&copy; ${new Date().getFullYear()} NextScene Nova. All rights reserved.</p>
-            <p style="margin-top: 0.5rem;">
-                <a href="/terms" onclick="route(event, '/terms')" class="text-link">Terms &amp; Conditions</a>
-            </p>
+        <div class="container" style="padding: 4rem 20px; color: var(--text-secondary);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; margin-bottom: 3rem;">
+                <div>
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1.25rem;">NextScene Nova</h3>
+                    <p style="line-height: 1.8; margin-bottom: 1rem;">The ultimate platform for scriptwriters and show developers. Join our premium vault today.</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1rem;">Quick Links</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 0.75rem;"><a href="/" onclick="route(event, '/')" style="color: var(--text-secondary); transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'">Home</a></li>
+                        <li style="margin-bottom: 0.75rem;"><a href="/scripts" onclick="route(event, '/scripts')" style="color: var(--text-secondary); transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'">Scripts</a></li>
+                        <li style="margin-bottom: 0.75rem;"><a href="/premium" onclick="route(event, '/premium')" style="color: var(--text-secondary); transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'">Premium</a></li>
+                        <li style="margin-bottom: 0.75rem;"><a href="/terms" onclick="route(event, '/terms')" style="color: var(--text-secondary); transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-secondary)'">Terms &amp; Conditions</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1rem;">Connect With Us</h4>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <a href="mailto:nextscenenova@gmail.com" target="_blank" rel="noopener noreferrer" 
+                           style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: 50%; color: var(--text-primary); border: 1px solid var(--border); transition: all 0.3s; text-decoration: none;"
+                           onmouseover="this.style.background='var(--primary)'; this.style.borderColor='var(--primary)'; this.style.transform='translateY(-3px)'"
+                           onmouseout="this.style.background='var(--bg-card)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'"
+                           aria-label="Email">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                        <a href="https://www.instagram.com/nextscene_nova_official?igsh=NDlpa3ZpbHAyNGVi" target="_blank" rel="noopener noreferrer"
+                           style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: 50%; color: var(--text-primary); border: 1px solid var(--border); transition: all 0.3s; text-decoration: none;"
+                           onmouseover="this.style.background='linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)'; this.style.borderColor='transparent'; this.style.transform='translateY(-3px)'"
+                           onmouseout="this.style.background='var(--bg-card)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'"
+                           aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://https://www.linkedin.com/in/nextscene-nova-nextscenenova-859429387?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" rel="noopener noreferrer"
+                           style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: 50%; color: var(--text-primary); border: 1px solid var(--border); transition: all 0.3s; text-decoration: none;"
+                           onmouseover="this.style.background='#0077b5'; this.style.borderColor='#0077b5'; this.style.transform='translateY(-3px)'"
+                           onmouseout="this.style.background='var(--bg-card)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'"
+                           aria-label="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="https://www.facebook.com/share/17w4c8LUSF/" target="_blank" rel="noopener noreferrer"
+                           style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: 50%; color: var(--text-primary); border: 1px solid var(--border); transition: all 0.3s; text-decoration: none;"
+                           onmouseover="this.style.background='#1877f2'; this.style.borderColor='#1877f2'; this.style.transform='translateY(-3px)'"
+                           onmouseout="this.style.background='var(--bg-card)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'"
+                           aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://twitter.com/nextscenenova" target="_blank" rel="noopener noreferrer"
+                           style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: 50%; color: var(--text-primary); border: 1px solid var(--border); transition: all 0.3s; text-decoration: none;"
+                           onmouseover="this.style.background='#000000'; this.style.borderColor='#000000'; this.style.transform='translateY(-3px)'"
+                           onmouseout="this.style.background='var(--bg-card)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'"
+                           aria-label="Twitter/X">
+                            <i class="fab fa-x-twitter"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid var(--border); padding-top: 2rem; text-align: center;">
+                <p>&copy; ${new Date().getFullYear()} NextScene Nova. All rights reserved.</p>
+            </div>
         </div>
     `,
 

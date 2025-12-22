@@ -1168,10 +1168,18 @@ async function renderCreateScript() {
 
 function renderPremium() {
     const main = document.getElementById('main-content');
+    
+    // Check for URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+    
     main.innerHTML = `
         <div class="container" style="padding-top: 120px; text-align: center;">
              <h1 class="text-gradient" style="font-size: 3rem; margin-bottom: 2rem;">Nova Premium</h1>
              <p style="font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 3rem;">Unlock exclusive scripts and advanced features.</p>
+             ${success ? '<div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; color: #22c55e; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">Payment successful! Your premium subscription is now active.</div>' : ''}
+             ${error ? `<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">Payment failed: ${error === 'no_token' ? 'No payment token received' : error === 'payment_failed' ? 'Payment could not be processed' : 'An error occurred'}</div>` : ''}
              
              <div id="premium-content"></div>
         </div>
@@ -1179,41 +1187,38 @@ function renderPremium() {
 
     if (!state.user || !state.user.isPremium) {
         document.getElementById('premium-content').innerHTML = `
-            <div class="grid">
-                <div class="card">
-                    <h2>Monthly</h2>
-                    <h1 class="text-gradient">$9.99</h1>
-                    <p>per month</p>
-                    <button class="btn btn-primary" style="margin-top: 2rem; width: 100%;" id="subscribe-monthly">Subscribe</button>
+            <div style="max-width: 900px; margin: 0 auto;">
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+                    <div class="card">
+                        <h2>Monthly</h2>
+                        <h1 class="text-gradient">$9.99</h1>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">per month</p>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary);">KES 1,000/month</p>
+                        <button class="btn btn-primary" style="margin-top: 2rem; width: 100%;" onclick="showPaymentOptions('monthly')">Subscribe</button>
+                    </div>
+                    <div class="card" style="border: 2px solid var(--primary); position: relative;">
+                        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 0.25rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">POPULAR</div>
+                        <h2>Annual</h2>
+                        <h1 class="text-gradient">$99.99</h1>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">per year</p>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary);">KES 10,000/year</p>
+                        <p style="font-size: 0.85rem; color: var(--primary); margin-top: 0.5rem; font-weight: 600;">Save 17%</p>
+                        <button class="btn btn-primary" style="margin-top: 2rem; width: 100%;" onclick="showPaymentOptions('annual')">Subscribe</button>
+                    </div>
                 </div>
-                <div class="card" style="border-color: var(--primary);">
-                    <h2>Annual</h2>
-                    <h1 class="text-gradient">$99.99</h1>
-                    <p>per year</p>
-                    <button class="btn btn-primary" style="margin-top: 2rem; width: 100%;" id="subscribe-annual">Subscribe</button>
+                
+                <!-- Payment Modal -->
+                <div id="payment-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center;">
+                    <div class="card" style="max-width: 500px; width: 90%; position: relative;">
+                        <button onclick="closePaymentModal()" style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
+                        <h2 style="margin-bottom: 1.5rem;">Choose Payment Method</h2>
+                        <div id="payment-methods" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Payment methods will be injected here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
-
-        const handleUpgrade = async (plan) => {
-            try {
-                const res = await api.post('/api/premium/upgrade', { plan });
-                if (res.success) {
-                    Components.toast('You are now a premium member!');
-                    state.user = res.user;
-                    state.isAuthenticated = true;
-                    updateNavbar();
-                    renderPremium();
-                } else {
-                    Components.toast(res.message || 'Upgrade failed', 'error');
-                }
-            } catch (err) {
-                Components.toast('Error upgrading to premium', 'error');
-            }
-        };
-
-        document.getElementById('subscribe-monthly').addEventListener('click', () => handleUpgrade('monthly'));
-        document.getElementById('subscribe-annual').addEventListener('click', () => handleUpgrade('annual'));
     } else {
         // Load premium scripts for current premium user
         (async function() {
@@ -1238,6 +1243,129 @@ function renderPremium() {
     }
 }
 
+// Payment modal functions
+function showPaymentOptions(plan) {
+    const modal = document.getElementById('payment-modal');
+    const methodsDiv = document.getElementById('payment-methods');
+    
+    if (!modal || !methodsDiv) return;
+    
+    modal.style.display = 'flex';
+    
+    methodsDiv.innerHTML = `
+        <button class="btn btn-primary" style="width: 100%; padding: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem;" onclick="handlePayPalPayment('${plan}')">
+            <i class="fab fa-paypal" style="font-size: 1.5rem;"></i>
+            <span>Pay with PayPal</span>
+        </button>
+        <button class="btn" style="width: 100%; padding: 1rem; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 0.75rem;" onclick="handleMpesaPayment('${plan}')">
+            <i class="fas fa-mobile-alt" style="font-size: 1.5rem;"></i>
+            <span>Pay with M-Pesa</span>
+        </button>
+    `;
+}
+
+function closePaymentModal() {
+    const modal = document.getElementById('payment-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function handlePayPalPayment(plan) {
+    try {
+        Components.toast('Redirecting to PayPal...');
+        const res = await api.post('/api/premium/paypal/create-order', { plan });
+        
+        if (res.success && res.approvalUrl) {
+            // Redirect to PayPal
+            window.location.href = res.approvalUrl;
+        } else {
+            Components.toast(res.message || 'Failed to create PayPal order', 'error');
+            closePaymentModal();
+        }
+    } catch (err) {
+        console.error('PayPal payment error:', err);
+        Components.toast('Error initiating PayPal payment', 'error');
+        closePaymentModal();
+    }
+}
+
+async function handleMpesaPayment(plan) {
+    const phoneNumber = prompt('Enter your M-Pesa phone number (e.g., 254712345678):');
+    if (!phoneNumber) {
+        return;
+    }
+    
+    // Basic phone number validation
+    const phoneRegex = /^(\+?254|0)?[17]\d{8}$/;
+    const cleanedPhone = phoneNumber.replace(/\D/g, '');
+    
+    if (!phoneRegex.test(phoneNumber) && cleanedPhone.length < 9) {
+        Components.toast('Please enter a valid phone number', 'error');
+        return;
+    }
+    
+    try {
+        Components.toast('Initiating M-Pesa payment...');
+        const res = await api.post('/api/premium/mpesa/initiate', { plan, phoneNumber });
+        
+        if (res.success) {
+            Components.toast(res.customerMessage || 'Check your phone to complete the payment');
+            closePaymentModal();
+            
+            // Poll for payment status
+            if (res.checkoutRequestID) {
+                pollMpesaStatus(res.checkoutRequestID);
+            }
+        } else {
+            Components.toast(res.message || 'Failed to initiate M-Pesa payment', 'error');
+            closePaymentModal();
+        }
+    } catch (err) {
+        console.error('M-Pesa payment error:', err);
+        Components.toast('Error initiating M-Pesa payment', 'error');
+        closePaymentModal();
+    }
+}
+
+async function pollMpesaStatus(checkoutRequestID) {
+    let attempts = 0;
+    const maxAttempts = 30; // Poll for 30 seconds
+    
+    const poll = async () => {
+        if (attempts >= maxAttempts) {
+            Components.toast('Payment status check timed out. Please refresh the page.', 'error');
+            return;
+        }
+        
+        try {
+            const res = await api.get(`/api/premium/mpesa/status/${checkoutRequestID}`);
+            
+            if (res.status === 'completed') {
+                Components.toast('Payment successful! You are now a premium member!');
+                // Refresh user state
+                const userRes = await api.get('/api/auth/me');
+                if (userRes.isAuthenticated) {
+                    state.user = userRes.user;
+                    state.isAuthenticated = true;
+                    updateNavbar();
+                }
+                renderPremium();
+            } else if (res.status === 'failed') {
+                Components.toast('Payment failed. Please try again.', 'error');
+            } else {
+                // Still pending, poll again
+                attempts++;
+                setTimeout(poll, 1000);
+            }
+        } catch (err) {
+            console.error('Status poll error:', err);
+            attempts++;
+            setTimeout(poll, 1000);
+        }
+    };
+    
+    poll();
+}
+
 async function logout() {
     if (!confirm('Are you sure you want to log out?')) {
         return;
@@ -1259,16 +1387,72 @@ function renderTerms() {
         <div class="container" style="padding-top: 120px; max-width: 800px;">
             <h1 class="text-gradient" style="margin-bottom: 1.5rem;">Terms &amp; Conditions</h1>
             <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-                These Terms &amp; Conditions outline the rules and guidelines for using the NextScene Nova platform.
-                Replace this placeholder text with your finalized legal terms.
+                These Terms and Conditions (“Terms”) govern access to and use of the NEXTSCENE NOVA website, platforms, services, and related offerings (“Platform”). By accessing, registering, or using the Platform, you agree to be bound by these Terms.
+            If you do not agree with any part of these Terms, you must discontinue use of the Platform.
             </p>
-            <ul style="color: var(--text-secondary); margin-left: 1.2rem; margin-bottom: 1rem;">
-                <li>Users are responsible for the content they upload and must own the necessary rights.</li>
-                <li>Premium subscriptions grant time-limited access to exclusive scripts and features.</li>
-                <li>Abusive, hateful, or illegal content is strictly prohibited.</li>
-            </ul>
+            <ol style="color: var(--text-secondary); margin-left: 1.2rem; margin-bottom: 1rem;">
+                <li> ABOUT NOVANEXTSCENE <br> NOVANEXTSCENE NOVA is a production and media house focused on the development, distribution, and promotion of African films, series, animations, cartoons, and related creative works. The Platform also facilitates premium membership access, branded merchandise sales, and audience engagement.</li>
+                <li>ELIGIBILITY AND USER ACCOUNTS <br>
+            Access to the Platform is restricted to registered premium members.
+            Users must provide accurate, current, and complete information during registration.
+            Login credentials are personal and must not be shared.
+            NEXTSCENE NOVA reserves the right to suspend or terminate accounts found to be in violation of these Terms.</li>
+                <li> PREMIUM MEMBERSHIP & PAYMENTS <br>
+Certain content and features are accessible only through paid premium membership.
+Payments may be processed through supported payment gateways, including mobile money and card services.
+Membership fees are non-refundable unless otherwise stated.
+NEXTSCENE NOVA reserves the right to modify membership pricing or structure with notice.</li>
+                <li> CONTENT ACCESS AND USE <br>
+All films, series, animations, scripts, graphics, and related materials available on the Platform are protected by intellectual property laws.
+Content is provided for personal, non-commercial viewing only.
+Users may not download, copy, reproduce, distribute, modify, or exploit any content without written permission.</li>
+                <li> INTELLECTUAL PROPERTY RIGHTS <br>
+All content, trademarks, logos, designs, scripts, and original materials are owned by or licensed to NEXTSCENE NOVA.
+Contributors (including scriptwriters, creatives, and collaborators) retain recognition rights as outlined in their respective agreements.
+Unauthorized use of NEXTSCENE NOVA intellectual property may result in legal action.</li>
+                <li> USER CONDUCT   <br>
+Users agree not to:
+Upload or share unlawful, harmful, defamatory, or misleading content
+Attempt unauthorized access to systems or accounts
+Engage in activities that disrupt platform functionality
+Impersonate others or misrepresent affiliations
+Violation of this section may result in immediate suspension or termination.</li>
+                <li> MERCHANDISE SALES <br>
+Branded merchandise may be offered through integrated e-commerce platforms.
+Product descriptions, prices, and availability are subject to change.
+Delivery timelines and return policies will be communicated at the point of sale.</li>
+                <li> COMMUNICATION AND NOTICES <br>
+Official communication will be conducted primarily via email and platform notifications.
+Users are responsible for monitoring official communications.
+Failure to respond to official notices may affect access or participation.</li>
+                <li>  THIRD-PARTY SERVICES <br>
+The Platform may integrate third-party services (e.g., payment processors, live chat tools). NEXTSCENE NOVA does not control these services and is not responsible for their independent policies or practices.</li>
+                <li>  DATA PROTECTION & PRIVACY <br>
+User data is collected and processed in accordance with our Privacy Policy.
+Identification documents, where required, are used strictly for verification and security purposes.
+NEXTSCENE NOVA does not sell or unlawfully disclose user data.</li>
+                <li> PLATFORM AVAILABILITY <br>
+The Platform is provided on an “as is” and “as available” basis.
+Temporary interruptions may occur due to maintenance, upgrades, or technical issues.
+NEXTSCENE NOVA does not guarantee uninterrupted access at all times.</li>
+                <li> LIMITATION OF LIABILITY <br>
+To the maximum extent permitted by law:
+NEXTSCENE NOVA shall not be liable for indirect, incidental, or consequential damages.
+Use of the Platform is at the user’s own risk.</li>
+                <li>  TERMINATION <br>
+NEXTSCENE NOVA may suspend or terminate access without prior notice where:
+These Terms are breached
+Fraudulent or harmful activity is detected
+Required by law or regulatory authorities</li>
+                <li>  MODIFICATIONS TO TERMS <br>
+NEXTSCENE NOVA reserves the right to update these Terms at any time. Continued use of the Platform constitutes acceptance of revised Terms.</li>
+                <li>  GOVERNING LAW <br>
+These Terms shall be governed and interpreted in accordance with the laws applicable in the Republic of Kenya.</li>
+                <li> CONTACT INFORMATION <br>
+For inquiries, feedback, or official communication, please contact:
+Email:nextscenenova@gmail.com </li>
+            </ol>
             <p style="color: var(--text-secondary);">
-                For full legal wording, please consult with a legal professional and update this page accordingly.
             </p>
         </div>
     `;
@@ -1437,6 +1621,10 @@ window.editScript = editScript;
 window.renderScriptEdit = renderScriptEdit;
 window.verifyWriter = verifyWriter;
 window.toggleFocusMode = toggleFocusMode;
+window.showPaymentOptions = showPaymentOptions;
+window.closePaymentModal = closePaymentModal;
+window.handlePayPalPayment = handlePayPalPayment;
+window.handleMpesaPayment = handleMpesaPayment;
 
 // Init
 window.addEventListener('DOMContentLoaded', () => {
