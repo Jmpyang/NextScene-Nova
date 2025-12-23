@@ -27,7 +27,8 @@ const registerValidation = [
     return true;
   }),
   body('acceptTerms').custom((value) => {
-    if (value !== 'true' && value !== true) {
+    // Accept checkbox values from forms (e.g., 'on'), boolean true, or the string 'true'
+    if (value !== 'true' && value !== true && value !== 'on' && value !== 'yes') {
       throw new Error('You must accept the Terms & Conditions to create an account');
     }
     return true;
