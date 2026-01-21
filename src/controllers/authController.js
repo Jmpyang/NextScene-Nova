@@ -1,6 +1,7 @@
 const passport = require('passport');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
+const CoinService = require('../services/coinService');
 
 // Handle registration
 exports.postRegister = async (req, res) => {
@@ -36,8 +37,17 @@ exports.postRegister = async (req, res) => {
       isWriter: isWriter === 'true' || isWriter === true,
       isVerified: isWriter !== 'true' && isWriter !== true, // Readers are verified by default
       provider: 'local',
-      acceptedTermsAt: new Date()
+      acceptedTermsAt: new Date(),
+      coins: 0 // Initialize coins
     });
+
+    // Award signup bonus
+    try {
+      await CoinService.awardSignupBonus(user._id);
+    } catch (coinError) {
+      console.error('Error awarding signup bonus:', coinError);
+      // Don't fail registration if coin system fails
+    }
 
     // Log the user in
     req.login(user, (err) => {
@@ -57,7 +67,8 @@ exports.postRegister = async (req, res) => {
           email: user.email,
           role: user.role,
           isWriter: user.isWriter,
-          isVerified: user.isVerified
+          isVerified: user.isVerified,
+          coins: user.coins
         }
       });
     });

@@ -90,7 +90,77 @@ const userSchema = new mongoose.Schema({
   // Has the user accepted the latest Terms & Conditions
   acceptedTermsAt: {
     type: Date
-  }
+  },
+  // Monetization System Fields
+  coins: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  badges: {
+    premium: {
+      type: Boolean,
+      default: false
+    },
+    monetized: {
+      type: Boolean,
+      default: false
+    }
+  },
+  monetizationEligible: {
+    type: Boolean,
+    default: false
+  },
+  monetizationStatus: {
+    type: String,
+    enum: ['PENDING', 'APPROVED', 'DENIED', 'BANNED'],
+    default: 'PENDING'
+  },
+  verificationStatus: {
+    type: String,
+    enum: ['UNVERIFIED', 'SUBMITTED', 'VERIFIED', 'REJECTED'],
+    default: 'UNVERIFIED'
+  },
+  premiumType: {
+    type: String,
+    enum: ['MONTHLY', 'YEARLY'],
+    default: null
+  },
+  // Monetization verification data
+  verificationDocuments: [{
+    idType: {
+      type: String,
+      enum: ['NATIONAL_ID', 'DRIVING_LICENSE', 'BIRTH_CERTIFICATE']
+    },
+    documentUrl: String,
+    submittedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  monetizationLastRenewed: {
+    type: Date
+  },
+  accountStatus: {
+    type: String,
+    enum: ['ACTIVE', 'SUSPENDED', 'BANNED'],
+    default: 'ACTIVE'
+  },
+  violationFlags: [{
+    type: {
+      type: String,
+      enum: ['MULTIPLE_ACCOUNTS', 'PLAGIARISM', 'COMMUNITY_VIOLATION', 'DEFAMATORY_CONTENT', 'PAYMENT_FRAUD', 'FALSE_INFORMATION']
+    },
+    reason: String,
+    flaggedAt: {
+      type: Date,
+      default: Date.now
+    },
+    severity: {
+      type: String,
+      enum: ['WARNING', 'SUSPENSION', 'BAN']
+    }
+  }]
 }, {
   timestamps: true
 });

@@ -13,6 +13,7 @@ const authRoutes = require('./src/routes/auth');
 const scriptRoutes = require('./src/routes/scripts');
 const userRoutes = require('./src/routes/user');
 const premiumRoutes = require('./src/routes/premium');
+const monetizationRoutes = require('./src/routes/monetization');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,6 +60,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/scripts', scriptRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/premium', premiumRoutes);
+app.use('/api/monetization', monetizationRoutes);
 
 // SPA Fallback - Serve index.html for any unknown routes (for client-side routing)
 // Note: This must come AFTER API routes

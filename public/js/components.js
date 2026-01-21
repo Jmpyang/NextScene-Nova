@@ -93,11 +93,11 @@ const Components = {
                            aria-label="Facebook">
                             <i class="fab fa-facebook-f"></i>
                         </a>
-                        <a href="https://twitter.com/nextscenenova" target="_blank" rel="noopener noreferrer"
+                        <a href="https://x.com/nextscenenova" target="_blank" rel="noopener noreferrer"
                            style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border-radius: 50%; color: var(--text-primary); border: 1px solid var(--border); transition: all 0.3s; text-decoration: none;"
-                           onmouseover="this.style.background='#000000'; this.style.borderColor='#000000'; this.style.transform='translateY(-3px)'"
-                           onmouseout="this.style.background='var(--bg-card)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'"
-                           aria-label="Twitter/X">
+                           onmouseover="this.style.background='#000000'; this.style.borderColor='#000000'; this.style.transform='translateY(-3px)'; this.style.color='#ffffff'"
+                           onmouseout="this.style.background='var(--bg-card)'; this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'; this.style.color='var(--text-primary)'"
+                           aria-label="X (formerly Twitter)">
                             <i class="fab fa-x-twitter"></i>
                         </a>
                     </div>
