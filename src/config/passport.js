@@ -82,7 +82,8 @@ passport.use(new FacebookStrategy(
         email: email || `${profile.id}@facebook.com`,
         socialId: profile.id,
         provider: 'facebook',
-        avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : ''
+        avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
+        isVerified: true
       });
 
       done(null, user);
@@ -127,7 +128,8 @@ passport.use(new GoogleStrategy(
         email: email || `${profile.id}@google.com`,
         socialId: profile.id,
         provider: 'google',
-        avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : ''
+        avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
+        isVerified: true
       });
 
       done(null, user);

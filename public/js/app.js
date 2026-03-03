@@ -420,7 +420,7 @@ ${script.content}
                                 </p>
                             `}
                             <div id="comments-list" style="margin-top: 2rem;">
-                                ${(script.comments || []).slice().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map(c => `
+                                ${(script.comments || []).slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(c => `
                                     <div style="display:flex; gap:1rem; margin-bottom:1rem;">
                                         <div>
                                             <div style="width:36px; height:36px; border-radius:50%; background:var(--bg-dark); display:flex; align-items:center; justify-content:center; font-size:0.9rem;">
@@ -719,8 +719,8 @@ function renderRegister() {
 
                 <div id="writer-note" style="display: none; background: rgba(var(--primary-rgb), 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--primary);">
                     <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
-                        <strong><i class="fas fa-info-circle"></i> Writer Verification</strong><br>
-                        Writers are verified by the Super Admin to ensure platform quality. This usually takes 24 hours.
+                        <strong><i class="fas fa-info-circle"></i> Writer Platform</strong><br>
+                        Writers can upload scripts and earn coins from premium readers. Platform quality is monitored regularly.
                     </p>
                 </div>
 
@@ -1168,12 +1168,12 @@ async function renderCreateScript() {
 
 function renderPremium() {
     const main = document.getElementById('main-content');
-    
+
     // Check for URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
     const error = urlParams.get('error');
-    
+
     main.innerHTML = `
         <div class="container" style="padding-top: 120px; text-align: center;">
              <h1 class="text-gradient" style="font-size: 3rem; margin-bottom: 2rem;">Nova Premium</h1>
@@ -1221,7 +1221,7 @@ function renderPremium() {
         `;
     } else {
         // Load premium scripts for current premium user
-        (async function() {
+        (async function () {
             try {
                 const data = await api.get('/api/premium');
                 if (data.success && data.scripts && data.scripts.length) {
@@ -1233,11 +1233,21 @@ function renderPremium() {
                         </div>
                     </section>
                 `;
+                } else if (data.requiresPremium) {
+                    // This happens if state.user.isPremium was truthy but backend says no
+                    state.user.isPremium = false;
+                    renderPremium(); // Re-render to show plans
                 } else {
-                    document.getElementById('premium-content').innerHTML = '<p>No premium scripts available yet.</p>';
+                    document.getElementById('premium-content').innerHTML = `
+                        <div style="padding: 4rem 2rem; background: var(--bg-card); border-radius: 20px; border: 1px dashed var(--border);">
+                            <i class="fas fa-folders" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem; display: block;"></i>
+                            <h3 style="margin-bottom: 1rem;">Premium Vault is Empty</h3>
+                            <p style="color: var(--text-secondary);">There are currently no premium scripts available. Check back soon for exclusive content!</p>
+                        </div>
+                    `;
                 }
             } catch (e) {
-                document.getElementById('premium-content').innerHTML = '<p>Error loading premium content.</p>';
+                document.getElementById('premium-content').innerHTML = '<p>Error loading premium content. Please try again later.</p>';
             }
         })();
     }
@@ -1247,11 +1257,11 @@ function renderPremium() {
 function showPaymentOptions(plan) {
     const modal = document.getElementById('payment-modal');
     const methodsDiv = document.getElementById('payment-methods');
-    
+
     if (!modal || !methodsDiv) return;
-    
+
     modal.style.display = 'flex';
-    
+
     methodsDiv.innerHTML = `
         <button class="btn btn-primary" style="width: 100%; padding: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem;" onclick="handlePayPalPayment('${plan}')">
             <i class="fab fa-paypal" style="font-size: 1.5rem;"></i>
@@ -1273,7 +1283,7 @@ async function handlePayPalPayment(plan) {
     try {
         Components.toast('Redirecting to PayPal...');
         const res = await api.post('/api/premium/paypal/create-order', { plan });
-        
+
         if (res.success && res.approvalUrl) {
             // Redirect to PayPal
             window.location.href = res.approvalUrl;
@@ -1293,24 +1303,24 @@ async function handleMpesaPayment(plan) {
     if (!phoneNumber) {
         return;
     }
-    
+
     // Basic phone number validation
     const phoneRegex = /^(\+?254|0)?[17]\d{8}$/;
     const cleanedPhone = phoneNumber.replace(/\D/g, '');
-    
+
     if (!phoneRegex.test(phoneNumber) && cleanedPhone.length < 9) {
         Components.toast('Please enter a valid phone number', 'error');
         return;
     }
-    
+
     try {
         Components.toast('Initiating M-Pesa payment...');
         const res = await api.post('/api/premium/mpesa/initiate', { plan, phoneNumber });
-        
+
         if (res.success) {
             Components.toast(res.customerMessage || 'Check your phone to complete the payment');
             closePaymentModal();
-            
+
             // Poll for payment status
             if (res.checkoutRequestID) {
                 pollMpesaStatus(res.checkoutRequestID);
@@ -1329,16 +1339,16 @@ async function handleMpesaPayment(plan) {
 async function pollMpesaStatus(checkoutRequestID) {
     let attempts = 0;
     const maxAttempts = 30; // Poll for 30 seconds
-    
+
     const poll = async () => {
         if (attempts >= maxAttempts) {
             Components.toast('Payment status check timed out. Please refresh the page.', 'error');
             return;
         }
-        
+
         try {
             const res = await api.get(`/api/premium/mpesa/status/${checkoutRequestID}`);
-            
+
             if (res.status === 'completed') {
                 Components.toast('Payment successful! You are now a premium member!');
                 // Refresh user state
@@ -1362,7 +1372,7 @@ async function pollMpesaStatus(checkoutRequestID) {
             setTimeout(poll, 1000);
         }
     };
-    
+
     poll();
 }
 

@@ -185,9 +185,14 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 // Check if premium is active
 userSchema.methods.isPremiumActive = function () {
-  if (!this.isPremium) return false;
-  if (!this.premiumExpiresAt) return this.isPremium;
-  return this.isPremium && new Date() < this.premiumExpiresAt;
+  // If explicitly not premium, return false
+  if (this.isPremium === false) return false;
+
+  // If isPremium is true and no expiry date, assume valid (legacy or lifetime)
+  if (this.isPremium === true && !this.premiumExpiresAt) return true;
+
+  // If expiry exists, check if it's in the future
+  return this.isPremium && this.premiumExpiresAt && new Date() < this.premiumExpiresAt;
 };
 
 module.exports = mongoose.model('User', userSchema);

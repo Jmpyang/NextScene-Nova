@@ -66,7 +66,7 @@ router.post('/reset/:token', authController.resetPassword);
 
 // Facebook OAuth
 router.get('/facebook',
-  passport.authenticate('facebook', { scope: ['email'] })
+  passport.authenticate('facebook', { scope: ['email', 'public_profile'] })
 );
 
 router.get('/facebook/callback',

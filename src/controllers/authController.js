@@ -35,7 +35,7 @@ exports.postRegister = async (req, res) => {
       phoneNumber,
       portfolioUrl: portfolioUrl || '',
       isWriter: isWriter === 'true' || isWriter === true,
-      isVerified: isWriter !== 'true' && isWriter !== true, // Readers are verified by default
+      isVerified: true, // Verification requirement removed
       provider: 'local',
       acceptedTermsAt: new Date(),
       coins: 0 // Initialize coins
@@ -68,6 +68,7 @@ exports.postRegister = async (req, res) => {
           role: user.role,
           isWriter: user.isWriter,
           isVerified: user.isVerified,
+          isPremium: user.isPremium,
           coins: user.coins
         }
       });
@@ -118,7 +119,8 @@ exports.postLogin = (req, res, next) => {
           email: user.email,
           role: user.role,
           isWriter: user.isWriter,
-          isVerified: user.isVerified
+          isVerified: user.isVerified,
+          isPremium: user.isPremium
         }
       });
     });

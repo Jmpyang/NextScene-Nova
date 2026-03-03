@@ -78,14 +78,13 @@ exports.postCreateScript = async (req, res) => {
     return res.status(400).json({ success: false, errors: errors.array() });
   }
 
-  // Check if user is a verified WRITER (Admins bypass this)
-  const isAuthorizedWriter = (req.user.isWriter && req.user.isVerified) || req.user.role === 'admin';
+  // Check if user is a WRITER (Admins bypass this)
+  const isAuthorizedWriter = req.user.isWriter || req.user.role === 'admin';
 
   if (!isAuthorizedWriter) {
-    const errorMsg = !req.user.isWriter ? 'Readers cannot upload scripts. Please register as a Writer.' : 'Account not verified. You must be verified by an admin to upload scripts.';
     return res.status(403).json({
       success: false,
-      message: errorMsg
+      message: 'Readers cannot upload scripts. Please register as a Writer.'
     });
   }
 
@@ -122,7 +121,7 @@ exports.postCreateScript = async (req, res) => {
     const script = await Script.create({
       title,
       description,
-      content: scriptContent || (isPDF ? 'PDF File Uploaded (Reading Not Supported. Please Download)' : ''),
+      content: scriptContent || (isPDF ? 'PDF Content' : ''),
       fileUrl,
       author: req.user._id,
       genre: genre || 'Other',
@@ -394,6 +393,11 @@ exports.downloadScriptPDF = async (req, res) => {
       if (!user.isPremiumActive() && script.author.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
         return res.status(403).json({ success: false, message: 'Premium subscription required to download this script' });
       }
+    }
+
+    // If it's an uploaded PDF, we should probably redirect to the original file or stream it
+    if (script.fileUrl && script.fileUrl.toLowerCase().endsWith('.pdf')) {
+      return res.redirect(script.fileUrl);
     }
 
     const PDFDocument = require('pdfkit');
