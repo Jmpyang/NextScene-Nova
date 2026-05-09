@@ -1,35 +1,40 @@
 require('dotenv').config();
-const mongoose = require('mongoose');
-const User = require('./src/models/User');
+const { prisma } = require('./src/config/db');
+const bcrypt = require('bcryptjs');
 
 const seedAdmin = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log('Connected to MongoDB');
+        console.log('Seeding admin user...');
 
         const adminEmail = 'admin@nextscenenova.com';
-        const existingAdmin = await User.findOne({ email: adminEmail });
+        const existingAdmin = await prisma.user.findUnique({
+            where: { email: adminEmail }
+        });
 
         if (existingAdmin) {
             console.log('Admin already exists');
         } else {
-            const admin = new User({
-                name: 'Super Admin',
-                email: adminEmail,
-                password: 'NovaAdmin2025!', // Secure password
-                role: 'admin',
-                isVerified: true
+            const hashedPassword = await bcrypt.hash('NovaAdmin2025!', 10);
+            
+            const admin = await prisma.user.create({
+                data: {
+                    name: 'Super Admin',
+                    email: adminEmail,
+                    password: hashedPassword,
+                    role: 'admin',
+                    isVerified: true
+                }
             });
 
-            await admin.save();
             console.log('Super Admin created successfully');
             console.log('Email: admin@nextscenenova.com');
             console.log('Password: NovaAdmin2025!');
         }
 
-        mongoose.connection.close();
+        await prisma.$disconnect();
     } catch (error) {
         console.error('Error seeding admin:', error);
+        await prisma.$disconnect();
         process.exit(1);
     }
 };

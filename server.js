@@ -1,11 +1,11 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const session = require('express-session');
 const passport = require('passport');
-const MongoStore = require('connect-mongo');
+const pgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
 const path = require('path');
-const connectDB = require('./src/config/db');
+const { connectDB } = require('./src/config/db');
 
 // Route imports
 const indexRoutes = require('./src/routes/index');
@@ -18,7 +18,12 @@ const monetizationRoutes = require('./src/routes/monetization');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
+// PostgreSQL connection pool for sessions
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// Connect to PostgreSQL
 connectDB();
 
 // Passport Config
@@ -31,13 +36,12 @@ app.set('view engine', 'ejs');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session
+// Session - Using memory store temporarily
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
       secure: process.env.NODE_ENV === 'production',

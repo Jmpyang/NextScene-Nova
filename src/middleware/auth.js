@@ -1,17 +1,7 @@
-// Check if user is authenticated
-exports.isLoggedIn = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
+const rbac = require('./rbac');
 
-  res.status(401).json({
-    success: false,
-    message: 'Login required',
-    isAuthenticated: false
-  });
-};
-
-// Check if user is NOT authenticated (for login/register pages)
+// Re-export RBAC middleware for backward compatibility
+exports.isLoggedIn = rbac.authenticateUser;
 exports.isLoggedOut = (req, res, next) => {
   if (!req.isAuthenticated()) {
     return next();
@@ -22,36 +12,18 @@ exports.isLoggedOut = (req, res, next) => {
     message: 'You are already logged in'
   });
 };
+exports.isAdmin = rbac.requireAdmin;
+exports.checkAccess = rbac.requirePremium;
 
-// Check if user is an admin
-exports.isAdmin = (req, res, next) => {
-  if (req.isAuthenticated() && req.user.role === 'admin') {
-    return next();
-  }
-  res.status(403).json({
-    success: false,
-    message: 'Access denied. Admin privileges required.'
-  });
-};
-
-// Check access to premium content (Admin or Premium User)
-exports.checkAccess = (req, res, next) => {
-  // If content is not premium, allow access (logic handled in controller, 
-  // but here we check if user has privileges to generally access premium stuff if required)
-  // Actually, typically checkAccess is used on a per-resource basis, but here we might want
-  // a middleware that ensures the user is EITHER premium OR admin.
-
-  if (req.isAuthenticated()) {
-    if (req.user.role === 'admin' || req.user.isPremium) {
-      return next();
-    }
-  }
-
-  res.status(403).json({
-    success: false,
-    message: 'This content is for Premium members only.'
-  });
-};
+// Export all RBAC middleware
+exports.requireReader = rbac.requireReader;
+exports.requireWriter = rbac.requireWriter;
+exports.requireAdmin = rbac.requireAdmin;
+exports.requirePremium = rbac.requirePremium;
+exports.requireVerifiedWriter = rbac.requireVerifiedWriter;
+exports.requirePermission = rbac.requirePermission;
+exports.requireOwnership = rbac.requireOwnership;
+exports.createRateLimit = rbac.createRateLimit;
 
 // Make user available to all views
 exports.setCurrentUser = (req, res, next) => {

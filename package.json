@@ -11,19 +11,21 @@
   "keywords": [
     "nextscene",
     "express",
-    "mongodb",
+    "postgresql",
+    "neon",
     "authentication",
     "multilingual"
   ],
   "author": "Pius Joshua",
   "license": "MIT",
   "dependencies": {
+    "@prisma/client": "^5.21.0",
     "@vercel/speed-insights": "^1.3.1",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.3",
     "connect-flash": "^0.1.1",
-    "connect-mongo": "^5.1.0",
+    "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "ejs": "^3.1.9",
@@ -33,8 +35,9 @@
     "i18next": "^23.7.11",
     "i18next-fs-backend": "^2.3.1",
     "i18next-http-middleware": "^3.5.0",
+    "isomorphic-dompurify": "^3.12.0",
+    "marked": "^18.0.3",
     "method-override": "^3.0.0",
-    "mongoose": "^8.0.3",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
@@ -46,6 +49,8 @@
     "passport-local": "^1.0.0",
     "paypal-rest-sdk": "^1.8.1",
     "pdfkit": "^0.17.2",
+    "pg": "^8.20.0",
+    "prisma": "^5.21.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

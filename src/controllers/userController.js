@@ -1,20 +1,17 @@
-const User = require('../models/User');
-const Script = require('../models/Script');
+const UserService = require('../models/User');
+const ScriptService = require('../models/Script');
 const { validationResult } = require('express-validator');
 
 // Show user profile
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
-      .populate('favorites', 'title genre createdAt isPremiumOnly');
-    const scripts = await Script.find({ author: req.user._id })
-      .sort({ createdAt: -1 })
-      .limit(10);
+    const user = await UserService.findById(req.user.id);
+    const scripts = await ScriptService.findByAuthor(req.user.id, { limit: 10 });
 
     res.json({
       success: true,
       profile: user,
-      scripts
+      scripts: scripts.scripts
     });
   } catch (error) {
     console.error('Error fetching profile:', error);
@@ -33,21 +30,22 @@ exports.postUpdateProfile = async (req, res) => {
   try {
     const { name, bio, website, twitter, linkedin, phoneNumber, portfolioUrl } = req.body;
 
-    const user = await User.findById(req.user._id);
-    user.name = name;
-    user.bio = bio;
-    user.website = website || '';
-    user.twitter = twitter || '';
-    user.linkedin = linkedin || '';
-    user.phoneNumber = phoneNumber || user.phoneNumber;
-    user.portfolioUrl = portfolioUrl || user.portfolioUrl;
+    const updateData = {
+      name,
+      bio: bio || '',
+      website: website || '',
+      twitter: twitter || '',
+      linkedin: linkedin || '',
+      phoneNumber: phoneNumber || ''
+    };
 
     // Handle avatar upload (Cloudinary returns URL in req.file.path)
     if (req.file) {
-      user.avatar = req.file.path;
+      updateData.avatar = req.file.secure_url || req.file.path;
+      console.log('Avatar uploaded successfully:', updateData.avatar);
     }
 
-    await user.save();
+    const user = await UserService.update(req.user.id, updateData);
 
     res.json({
       success: true,
@@ -67,11 +65,6 @@ exports.postPremiumUpgrade = async (req, res) => {
   try {
     const { plan } = req.body; // 'monthly' or 'annual'
 
-    const user = await User.findById(req.user._id);
-
-    // Set premium status
-    user.isPremium = true;
-
     // Set expiration date based on plan
     const expiresAt = new Date();
     if (plan === 'monthly') {
@@ -80,8 +73,10 @@ exports.postPremiumUpgrade = async (req, res) => {
       expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     }
 
-    user.premiumExpiresAt = expiresAt;
-    await user.save();
+    const user = await UserService.update(req.user.id, {
+      isPremium: true,
+      premiumExpiresAt: expiresAt
+    });
 
     res.json({
       success: true,
@@ -96,35 +91,14 @@ exports.postPremiumUpgrade = async (req, res) => {
 
 // --- Favorites / Saved scripts ---
 
-// Add or remove a script from user's favorites
+// Add or remove a script from user's favorites (Note: favorites not in Prisma schema)
 exports.toggleFavorite = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    const scriptId = req.params.id;
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const index = user.favorites.findIndex(id => id.toString() === scriptId);
-    let favorited;
-
-    if (index === -1) {
-      user.favorites.push(scriptId);
-      favorited = true;
-      message = 'Added to favorites';
-    } else {
-      user.favorites.splice(index, 1);
-      favorited = false;
-      message = 'Removed from favorites';
-    }
-
-    await user.save();
-
-    res.json({
-      success: true,
-      favorited,
-      message
+    // This functionality would need to be implemented separately
+    // as favorites are not in the current Prisma schema
+    res.status(501).json({ 
+      success: false, 
+      message: 'Favorites functionality not implemented in current schema' 
     });
   } catch (error) {
     console.error('Error toggling favorite:', error);
@@ -135,17 +109,15 @@ exports.toggleFavorite = async (req, res) => {
 // Show premium content page
 exports.getPremiumContent = async (req, res) => {
   try {
-    const premiumScripts = await Script.find({
-      status: 'published',
-      isPremiumOnly: true
-    })
-      .populate('author', 'name avatar')
-      .sort({ createdAt: -1 })
-      .limit(20);
+    const premiumScripts = await ScriptService.findAll({ 
+      status: 'published', 
+      isPremiumOnly: true, 
+      limit: 20 
+    });
 
     res.json({
       success: true,
-      scripts: premiumScripts
+      scripts: premiumScripts.scripts
     });
   } catch (error) {
     console.error('Error fetching premium content:', error);
@@ -162,15 +134,16 @@ exports.getUnverifiedWriters = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
-    const unverifiedUsers = await User.find({
+    const unverifiedUsers = await UserService.findAll({ 
       isVerified: false,
       isWriter: true,
-      role: 'user'
-    }).select('-password').sort({ createdAt: -1 });
+      role: 'user',
+      limit: 100
+    });
 
     res.json({
       success: true,
-      users: unverifiedUsers
+      users: unverifiedUsers.users
     });
   } catch (error) {
     console.error('Error fetching unverified writers:', error);
@@ -185,18 +158,19 @@ exports.postVerifyWriter = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
-    const user = await User.findById(req.params.id);
+    const user = await UserService.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    user.isVerified = true;
-    await user.save();
+    const updatedUser = await UserService.update(req.params.id, {
+      isVerified: true
+    });
 
     res.json({
       success: true,
       message: `${user.name} has been verified successfully`,
-      user
+      user: updatedUser
     });
   } catch (error) {
     console.error('Error verifying writer:', error);

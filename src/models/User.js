@@ -1,198 +1,297 @@
-const mongoose = require('mongoose');
+const { prisma } = require('../config/db');
 const bcrypt = require('bcryptjs');
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-  password: {
-    type: String,
-    required: function () {
-      return !this.socialId; // Password required only for local auth
+class UserService {
+  // Create a new user
+  static async create(userData) {
+    const { password, ...data } = userData;
+    
+    // Hash password if provided
+    let hashedPassword = null;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      hashedPassword = await bcrypt.hash(password, salt);
     }
-  },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  },
-  resetPasswordToken: String,
-  resetPasswordExpires: Date,
-  // Social authentication fields
-  socialId: {
-    type: String,
-    sparse: true
-  },
-  provider: {
-    type: String,
-    enum: ['local', 'facebook', 'google'],
-    default: 'local'
-  },
-  // Premium status
-  isPremium: {
-    type: Boolean,
-    default: false
-  },
-  premiumExpiresAt: {
-    type: Date
-  },
-  // Profile fields
-  avatar: {
-    type: String,
-    default: ''
-  },
-  bio: {
-    type: String,
-    default: ''
-  },
-  phoneNumber: {
-    type: String,
-    default: ''
-  },
-  isVerified: {
-    type: Boolean,
-    default: false
-  },
-  isWriter: {
-    type: Boolean,
-    default: false
-  },
-  website: {
-    type: String,
-    default: ''
-  },
-  twitter: {
-    type: String,
-    default: ''
-  },
-  linkedin: {
-    type: String,
-    default: ''
-  },
-  portfolioUrl: {
-    type: String,
-    default: ''
-  },
-  // Saved scripts / favorites
-  favorites: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Script'
-  }],
-  // Has the user accepted the latest Terms & Conditions
-  acceptedTermsAt: {
-    type: Date
-  },
-  // Monetization System Fields
-  coins: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  badges: {
-    premium: {
-      type: Boolean,
-      default: false
-    },
-    monetized: {
-      type: Boolean,
-      default: false
-    }
-  },
-  monetizationEligible: {
-    type: Boolean,
-    default: false
-  },
-  monetizationStatus: {
-    type: String,
-    enum: ['PENDING', 'APPROVED', 'DENIED', 'BANNED'],
-    default: 'PENDING'
-  },
-  verificationStatus: {
-    type: String,
-    enum: ['UNVERIFIED', 'SUBMITTED', 'VERIFIED', 'REJECTED'],
-    default: 'UNVERIFIED'
-  },
-  premiumType: {
-    type: String,
-    enum: ['MONTHLY', 'YEARLY'],
-    default: null
-  },
-  // Monetization verification data
-  verificationDocuments: [{
-    idType: {
-      type: String,
-      enum: ['NATIONAL_ID', 'DRIVING_LICENSE', 'BIRTH_CERTIFICATE']
-    },
-    documentUrl: String,
-    submittedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  monetizationLastRenewed: {
-    type: Date
-  },
-  accountStatus: {
-    type: String,
-    enum: ['ACTIVE', 'SUSPENDED', 'BANNED'],
-    default: 'ACTIVE'
-  },
-  violationFlags: [{
-    type: {
-      type: String,
-      enum: ['MULTIPLE_ACCOUNTS', 'PLAGIARISM', 'COMMUNITY_VIOLATION', 'DEFAMATORY_CONTENT', 'PAYMENT_FRAUD', 'FALSE_INFORMATION']
-    },
-    reason: String,
-    flaggedAt: {
-      type: Date,
-      default: Date.now
-    },
-    severity: {
-      type: String,
-      enum: ['WARNING', 'SUSPENSION', 'BAN']
-    }
-  }]
-}, {
-  timestamps: true
-});
 
-// Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
+    return await prisma.user.create({
+      data: {
+        ...data,
+        password: hashedPassword,
+        totalCoinsEarned: 0,
+        totalMoneyWithdrawn: 0,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isPremium: true,
+        premiumExpiresAt: true,
+        avatar: true,
+        bio: true,
+        phoneNumber: true,
+        isVerified: true,
+        isWriter: true,
+        website: true,
+        twitter: true,
+        linkedin: true,
+        coins: true,
+        totalCoinsEarned: true,
+        totalMoneyWithdrawn: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
   }
 
-  if (this.password) {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+  // Find user by ID
+  static async findById(id) {
+    return await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isPremium: true,
+        premiumExpiresAt: true,
+        avatar: true,
+        bio: true,
+        phoneNumber: true,
+        isVerified: true,
+        isWriter: true,
+        website: true,
+        twitter: true,
+        linkedin: true,
+        coins: true,
+        totalCoinsEarned: true,
+        totalMoneyWithdrawn: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
   }
-  next();
-});
 
-// Method to compare passwords
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
+  // Find user by email
+  static async findByEmail(email) {
+    return await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        password: true,
+        role: true,
+        socialId: true,
+        provider: true,
+        isPremium: true,
+        premiumExpiresAt: true,
+        avatar: true,
+        bio: true,
+        phoneNumber: true,
+        isVerified: true,
+        isWriter: true,
+        website: true,
+        twitter: true,
+        linkedin: true,
+        coins: true,
+        totalCoinsEarned: true,
+        totalMoneyWithdrawn: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
+  }
 
-// Check if premium is active
-userSchema.methods.isPremiumActive = function () {
-  // If explicitly not premium, return false
-  if (this.isPremium === false) return false;
+  // Find user by social ID and provider
+  static async findBySocialId(socialId, provider) {
+    return await prisma.user.findFirst({
+      where: {
+        socialId,
+        provider,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        socialId: true,
+        provider: true,
+        isPremium: true,
+        premiumExpiresAt: true,
+        avatar: true,
+        bio: true,
+        phoneNumber: true,
+        isVerified: true,
+        isWriter: true,
+        website: true,
+        twitter: true,
+        linkedin: true,
+        coins: true,
+        totalCoinsEarned: true,
+        totalMoneyWithdrawn: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
+  }
 
-  // If isPremium is true and no expiry date, assume valid (legacy or lifetime)
-  if (this.isPremium === true && !this.premiumExpiresAt) return true;
+  // Update user
+  static async update(id, updateData) {
+    const { password, ...data } = updateData;
+    
+    // Hash password if provided
+    let hashedPassword = undefined;
+    if (password !== undefined) {
+      if (password) {
+        const salt = await bcrypt.genSalt(10);
+        hashedPassword = await bcrypt.hash(password, salt);
+      } else {
+        hashedPassword = null;
+      }
+    }
 
-  // If expiry exists, check if it's in the future
-  return this.isPremium && this.premiumExpiresAt && new Date() < this.premiumExpiresAt;
-};
+    return await prisma.user.update({
+      where: { id },
+      data: {
+        ...data,
+        ...(hashedPassword !== undefined && { password: hashedPassword }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isPremium: true,
+        premiumExpiresAt: true,
+        avatar: true,
+        bio: true,
+        phoneNumber: true,
+        isVerified: true,
+        isWriter: true,
+        website: true,
+        twitter: true,
+        linkedin: true,
+        coins: true,
+        totalCoinsEarned: true,
+        totalMoneyWithdrawn: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    });
+  }
 
-module.exports = mongoose.model('User', userSchema);
+  // Delete user
+  static async delete(id) {
+    return await prisma.user.delete({
+      where: { id }
+    });
+  }
+
+  // Find all users (with pagination)
+  static async findAll(options = {}) {
+    const { page = 1, limit = 10, role, isVerified } = options;
+    const skip = (page - 1) * limit;
+
+    const where = {};
+    if (role) where.role = role;
+    if (isVerified !== undefined) where.isVerified = isVerified;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isPremium: true,
+          premiumExpiresAt: true,
+          avatar: true,
+          bio: true,
+          phoneNumber: true,
+          isVerified: true,
+          isWriter: true,
+          website: true,
+          twitter: true,
+          linkedin: true,
+          coins: true,
+          totalCoinsEarned: true,
+          totalMoneyWithdrawn: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.user.count({ where })
+    ]);
+
+    return {
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  // Compare password
+  static async comparePassword(user, candidatePassword) {
+    if (!user.password) return false;
+    return await bcrypt.compare(candidatePassword, user.password);
+  }
+
+  // Check if premium is active
+  static isPremiumActive(user) {
+    // If explicitly not premium, return false
+    if (user.isPremium === false) return false;
+
+    // If isPremium is true and no expiry date, assume valid (legacy or lifetime)
+    if (user.isPremium === true && !user.premiumExpiresAt) return true;
+
+    // If expiry exists, check if it's in the future
+    return user.isPremium && user.premiumExpiresAt && new Date() < user.premiumExpiresAt;
+  }
+
+  // Update user coins
+  static async updateCoins(userId, coins, totalCoinsEarned) {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: {
+        coins,
+        totalCoinsEarned,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        coins: true,
+        totalCoinsEarned: true,
+      }
+    });
+  }
+
+  // Update total money withdrawn
+  static async updateTotalWithdrawn(userId, amount) {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: {
+        totalMoneyWithdrawn: {
+          increment: amount,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        totalMoneyWithdrawn: true,
+      }
+    });
+  }
+}
+
+module.exports = UserService;

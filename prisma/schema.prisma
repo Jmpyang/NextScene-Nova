@@ -1,0 +1,300 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String      @id @default(cuid())
+  name                  String
+  email                 String      @unique
+  password              String?
+  role                  String      @default("user") // user, admin
+  resetPasswordToken    String?
+  resetPasswordExpires  DateTime?
+  
+  // Social authentication
+  socialId              String?
+  provider              String      @default("local") // local, facebook, google
+  
+  // Premium status
+  isPremium             Boolean     @default(false)
+  premiumExpiresAt      DateTime?
+  
+  // Profile information
+  avatar                String      @default("")
+  bio                   String      @default("")
+  phoneNumber           String      @default("")
+  isVerified            Boolean     @default(false)
+  isWriter              Boolean     @default(false)
+  website               String      @default("")
+  twitter               String      @default("")
+  linkedin              String      @default("")
+  
+  // Coin system
+  coins                 Int         @default(0)
+  totalCoinsEarned      Int         @default(0)
+  totalMoneyWithdrawn   Float       @default(0)
+  
+  // Activity tracking
+  lastLoginAt            DateTime?
+  loginCount            Int         @default(0)
+  
+  // Account status
+  isActive              Boolean     @default(true)
+  isBanned              Boolean     @default(false)
+  bannedAt              DateTime?
+  bannedReason          String?
+  
+  // Tracking
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  // Relations
+  scripts               Script[]
+  posts                 Post[]
+  ratings               Rating[]
+  comments              Comment[]
+  payments              Payment[]
+  coinTransactions      CoinTransaction[]
+  monetizationApp       MonetizationApplication?
+  monetizationReviews   MonetizationApplication[] @relation("ReviewedBy")
+  withdrawals           Withdrawal[]
+  bugReports            BugReport[]  @relation("ReportedBy")
+  assignedBugs          BugReport[]  @relation("AssignedTo")
+
+  @@index([email])
+  @@index([createdAt])
+  @@index([role])
+  @@index([isWriter])
+  @@index([isPremium])
+}
+
+model Script {
+  id            String   @id @default(cuid())
+  title         String
+  content       String
+  description   String   @default("")
+  fileUrl       String   @default("")
+  authorId      String
+  isPremiumOnly Boolean  @default(false)
+  genre         String   @default("Other")
+  pageCount     Int      @default(0)
+  language      String   @default("English")
+  editCount     Int      @default(0)
+  averageRating Float    @default(0)
+  totalRatings  Int      @default(0)
+  views         Int      @default(0)
+  likes         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  status        String   @default("draft")
+  ratings       Rating[]
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([genre])
+}
+
+model Post {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  content       String
+  excerpt       String    @default("")
+  authorId      String
+  featuredImage String    @default("")
+  category      String    @default("general")
+  tags          String[]  @default([])
+  status        String    @default("draft")
+  views         Int       @default(0)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([slug])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  userId    String
+  scriptId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  script    Script   @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scriptId])
+  @@index([scriptId])
+}
+
+model Payment {
+  id                     String   @id @default(cuid())
+  userId                 String
+  plan                   String
+  amount                 Float
+  currency               String   @default("USD")
+  paymentMethod          String
+  status                 String   @default("pending")
+  paypalOrderId          String?
+  paypalCaptureId        String?
+  mpesaCheckoutRequestID String?
+  mpesaReceiptNumber     String?
+  mpesaPhoneNumber       String?
+  metadata               Json?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CoinTransaction {
+  id           String   @id @default(cuid())
+  userId       String
+  type         String
+  source       String
+  amount       Int
+  balanceAfter Int
+  description  String   @default("")
+  referenceId  String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model MonetizationApplication {
+  id                       String   @id @default(cuid())
+  userId                   String   @unique
+  status                   String   @default("PENDING")
+  submissionDate           DateTime @default(now())
+  submittedDocuments       Json?
+  contentOwnershipProofUrl String?
+  contentOwnershipPublicId String?
+  contentOwnershipType     String?
+  reviewedById             String?
+  rejectionReason          String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  reviewedBy               User?    @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Withdrawal {
+  id                 String   @id @default(cuid())
+  userId             String
+  amount             Float
+  currency           String   @default("KES")
+  status             String   @default("pending")
+  method             String
+  mpesaPhoneNumber   String?
+  mpesaTransactionId String?
+  bankAccountName    String?
+  bankAccountNumber  String?
+  bankName           String?
+  metadata           Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  userId      String
+  scriptId    String
+  parentId    String?  // For nested comments
+  
+  // Moderation
+  isApproved  Boolean  @default(true)
+  isDeleted   Boolean  @default(false)
+  deletedAt   DateTime?
+  deletedBy   String?  // User ID who deleted
+  
+  // Tracking
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  script      Script   @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  parent      Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     Comment[] @relation("CommentReplies")
+  
+  @@index([scriptId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([isApproved])
+}
+
+model BugReport {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  severity      String   @default("medium") // low, medium, high, critical
+  status        String   @default("open") // open, in_progress, resolved, closed
+  
+  // Classification
+  category      String   @default("general") // ui, backend, payment, auth, performance, other
+  priority      String   @default("normal") // low, normal, high, urgent
+  
+  // User assignment
+  reportedById  String
+  assignedToId  String?
+  
+  // Resolution
+  resolvedAt    DateTime?
+  resolvedById  String?
+  resolution    String?
+  
+  // Additional info
+  userAgent     String?
+  url           String?
+  screenshots   String[] // Array of image URLs
+  metadata      Json?    // Additional technical details
+  
+  // Tracking
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  reportedBy    User     @relation("ReportedBy", fields: [reportedById], references: [id])
+  assignedTo    User?    @relation("AssignedTo", fields: [assignedToId], references: [id])
+  resolvedBy    User?    @relation(fields: [resolvedById], references: [id])
+  
+  @@index([status])
+  @@index([severity])
+  @@index([category])
+  @@index([reportedById])
+  @@index([assignedToId])
+  @@index([createdAt])
+}
+
+model Session {
+  sid    String   @id
+  sess   Json
+  expire DateTime
+
+  @@index([expire])
+}

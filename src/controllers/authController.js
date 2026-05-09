@@ -1,7 +1,7 @@
 const passport = require('passport');
 const { validationResult } = require('express-validator');
-const User = require('../models/User');
-const CoinService = require('../services/coinService');
+const UserService = require('../models/User');
+const CoinTransactionService = require('../models/CoinTransaction');
 
 // Handle registration
 exports.postRegister = async (req, res) => {
@@ -18,7 +18,7 @@ exports.postRegister = async (req, res) => {
 
   try {
     // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await UserService.findByEmail(email.toLowerCase());
 
     if (existingUser) {
       return res.status(400).json({
@@ -28,22 +28,19 @@ exports.postRegister = async (req, res) => {
     }
 
     // Create new user
-    const user = await User.create({
+    const user = await UserService.create({
       name,
       email: email.toLowerCase(),
       password,
-      phoneNumber,
-      portfolioUrl: portfolioUrl || '',
+      phoneNumber: phoneNumber || '',
       isWriter: isWriter === 'true' || isWriter === true,
       isVerified: true, // Verification requirement removed
-      provider: 'local',
-      acceptedTermsAt: new Date(),
-      coins: 0 // Initialize coins
+      provider: 'local'
     });
 
     // Award signup bonus
     try {
-      await CoinService.awardSignupBonus(user._id);
+      await CoinTransactionService.awardCoins(user.id, 10, 'SIGNUP', 'Welcome bonus for signing up!');
     } catch (coinError) {
       console.error('Error awarding signup bonus:', coinError);
       // Don't fail registration if coin system fails
@@ -62,7 +59,7 @@ exports.postRegister = async (req, res) => {
         success: true,
         message: 'Registration successful',
         user: {
-          id: user._id,
+          id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
@@ -114,7 +111,7 @@ exports.postLogin = (req, res, next) => {
         success: true,
         message: 'Login successful',
         user: {
-          id: user._id,
+          id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
@@ -139,36 +136,43 @@ exports.logout = (req, res) => {
 };
 
 const crypto = require('crypto');
+const emailService = require('../config/email');
 
 // Forgot Password
 exports.forgotPassword = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email.toLowerCase() });
+    const user = await UserService.findByEmail(req.body.email.toLowerCase());
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'No account with that email found.' });
     }
 
-    // Generate token
-    const token = crypto.randomBytes(20).toString('hex');
-
     // Set token and specific expiration (1 hour)
-    user.resetPasswordToken = token;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    const token = crypto.randomBytes(20).toString('hex');
+    const resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
 
-    await user.save();
+    await UserService.update(user.id, {
+      resetPasswordToken: token,
+      resetPasswordExpires
+    });
 
-    // Mock Email Sending
-    console.log('-------------------------------------------');
-    console.log(`To: ${user.email}`);
-    console.log(`Subject: Password Reset`);
-    console.log(`Text: You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n` +
-      `Please click on the following link, or paste this into your browser to complete the process:\n\n` +
-      `http://${req.headers.host}/reset/${token}\n\n` +
-      `If you did not request this, please ignore this email and your password will remain unchanged.\n`);
-    console.log('-------------------------------------------');
+    // Send real email
+    const emailResult = await emailService.sendPasswordResetEmail(user, token, req);
+    
+    if (!emailResult.success) {
+      console.error('Email sending failed:', emailResult.error);
+      // Still return success to user to prevent email enumeration attacks
+      return res.json({ 
+        success: true, 
+        message: 'If an account with that email exists, a password reset link has been sent.' 
+      });
+    }
 
-    res.json({ success: true, message: 'An email has been sent to ' + user.email + ' with further instructions.' });
+    res.json({ 
+      success: true, 
+      message: 'An email has been sent to ' + user.email + ' with further instructions.',
+      messageId: emailResult.messageId
+    });
 
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -179,12 +183,11 @@ exports.forgotPassword = async (req, res) => {
 // Reset Password
 exports.resetPassword = async (req, res) => {
   try {
-    const user = await User.findOne({
-      resetPasswordToken: req.params.token,
-      resetPasswordExpires: { $gt: Date.now() }
-    });
+    const user = await UserService.findByEmail(req.body.email.toLowerCase());
 
-    if (!user) {
+    if (!user || !user.resetPasswordToken || !user.resetPasswordExpires || 
+        new Date(user.resetPasswordExpires) < new Date() ||
+        user.resetPasswordToken !== req.params.token) {
       return res.status(400).json({ success: false, message: 'Password reset token is invalid or has expired.' });
     }
 
@@ -193,14 +196,17 @@ exports.resetPassword = async (req, res) => {
     }
 
     // Set new password
-    user.password = req.body.password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
+    await UserService.update(user.id, {
+      password: req.body.password,
+      resetPasswordToken: null,
+      resetPasswordExpires: null
+    });
 
-    await user.save();
+    // Get updated user data
+    const updatedUser = await UserService.findByEmail(user.email);
 
     // Log the user in
-    req.login(user, (err) => {
+    req.login(updatedUser, (err) => {
       if (err) {
         console.error('Login error after reset:', err);
         return res.status(500).json({ success: false, message: 'Error logging in after password reset' });
